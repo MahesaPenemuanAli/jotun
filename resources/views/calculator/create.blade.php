@@ -5,7 +5,7 @@
             <span class="eyebrow">Alat Konsultasi Mandiri</span>
             <h1 style="font-size: 2.8rem; margin-bottom: 16px;">Kalkulator Kebutuhan Cat</h1>
             <p style="color: var(--muted); font-size: 1.1rem; max-width: 720px; margin-bottom: 0;">
-                Hitung perkiraan volume cat yang dibutuhkan sebelum Anda melakukan pembelian. Data perhitungan Anda akan otomatis tersimpan dalam sistem agar staff toko kami dapat langsung mempersiapkan pesanan Anda secara instan saat Anda berkunjung ke cabang kami.
+                Hitung perkiraan volume cat yang dibutuhkan sebelum Anda melakukan pembelian. Data perhitungan Anda akan otomatis tersimpan dalam sistem agar staff toko kami di cabang **Graha Metropolitan Deli Serdang** dapat langsung mempersiapkan pesanan Anda secara instan saat Anda berkunjung ke showroom kami.
             </p>
         </div>
     </section>

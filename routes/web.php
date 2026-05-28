@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Route;
 
 // ─── Public Routes ───────────────────────────────────────────────
 
+Route::get("/seed", function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call("db:seed");
+        return response("Database Jotun sukses di-seed dengan data riil cabang Graha Metropolitan! <a href='" . route('home') . "'>Kembali ke Beranda</a>");
+    } catch (\Exception $e) {
+        return response("Gagal melakukan seeding: " . $e->getMessage());
+    }
+});
+
 Route::view("/", "welcome")->name("home");
 
 Route::get("/katalog", [PublicCatalogController::class, "index"])->name(

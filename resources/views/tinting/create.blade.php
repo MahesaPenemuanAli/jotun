@@ -1,11 +1,11 @@
-<x-layouts.public title="Jotun Color Studio | Pencampuran Warna Premium" description="Eksperimen dengan campuran warna cat Jotun di Color Studio interaktif. Pilih produk, campur pigment, sesuaikan shade, dan kirim request tinting Anda secara instan.">
+<x-layouts.public title="Jotun Color Studio | Pencampuran Warna Premium" description="Eksperimen dengan campuran warna cat Jotun di Color Studio interaktif. Pilih produk kustom Anda dan kirimkan langsung ke cabang Jotun Graha Metropolitan Deli Serdang.">
     <!-- Header Hero -->
     <section class="hero" style="padding: 80px 0 48px; background-color: var(--surface); border-bottom: 1px solid var(--line);">
         <div class="container">
             <span class="eyebrow">Studio Pencampuran Warna</span>
             <h1 style="font-size: 2.8rem; margin-bottom: 16px;">Jotun Color Studio</h1>
             <p style="color: var(--muted); font-size: 1.1rem; max-width: 800px; margin-bottom: 0;">
-                Eksperimen secara visual dengan jutaan kombinasi warna cat premium kami. Pilih jenis cat, tentukan warna dasar Anda, dan sesuaikan kehangatan serta kegelapan warna untuk mendapatkan racikan pigmen cat kustom yang paling mewakili kepribadian Anda.
+                Eksperimen secara visual dengan jutaan kombinasi warna cat premium kami. Pilih jenis cat, tentukan warna dasar, dan sesuaikan shade Anda. Formula kustom pigmen Anda akan otomatis terkirim ke mesin tinting komputer cabang **Graha Metropolitan Deli Serdang** agar pesanan siap saat Anda berkunjung ke toko kami.
             </p>
         </div>
     </section>

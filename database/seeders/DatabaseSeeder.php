@@ -44,11 +44,11 @@ class DatabaseSeeder extends Seeder
         ProfilToko::query()->updateOrCreate(
             ["id_admin" => $admin->id_admin],
             [
-                "nama_toko" => "Jotun Paint Center Cabang Utama",
-                "alamat" => "Jl. Contoh Raya No. 10, Kota Anda",
-                "kontak" => "081234567890",
+                "nama_toko" => "Jotun Paint Center Graha Metropolitan",
+                "alamat" => "Kompleks, Jl. Graha Metropolitan No. 85, Helvetia, Kec. Sunggal, Kabupaten Deli Serdang, Sumatera Utara",
+                "kontak" => "0812-3456-7890",
                 "deskripsi" =>
-                    "Cabang toko cat Jotun dengan layanan konsultasi produk, kalkulasi kebutuhan cat, dan request tinting warna.",
+                    "Dealer Resmi Cat Jotun Graha Metropolitan Deli Serdang. Menyediakan cat premium eksterior, interior, kayu, dan besi orisinal lengkap dengan sistem pencampuran warna (tinting) instan terkomputerisasi.",
             ],
         );
 
@@ -68,49 +68,49 @@ class DatabaseSeeder extends Seeder
         $produkInterior = KatalogProduk::query()->updateOrCreate(
             [
                 "id_admin" => $admin->id_admin,
-                "nama_produk" => "Majestic True Beauty Matt",
+                "nama_produk" => "Majestic Sense",
             ],
             [
                 "kategori" => "Interior",
-                "harga" => 245000,
+                "harga" => 320000,
                 "daya_sebar" => 12.0,
                 "gambar" => null,
             ],
         );
 
-        $produkInteriorEkonomis = KatalogProduk::query()->updateOrCreate(
+        $produkKayuBesi = KatalogProduk::query()->updateOrCreate(
             [
                 "id_admin" => $admin->id_admin,
-                "nama_produk" => "Jotun Essence Easy Clean",
+                "nama_produk" => "Gardex Premium Gloss",
             ],
             [
-                "kategori" => "Interior",
-                "harga" => 185000,
+                "kategori" => "Kayu & Besi",
+                "harga" => 195000,
                 "daya_sebar" => 11.0,
                 "gambar" => null,
             ],
         );
 
-        // ─── Colors for Majestic True Beauty (Interior) ──────────────────
+        // ─── Colors for Majestic Sense (Interior) ────────────────────────
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-001"],
-            ["nama_warna" => "Classic White", "hex_color" => "#F8F5EC", "gambar" => null]
-        );
-        Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-002"],
+            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-9918"],
             ["nama_warna" => "Morning Fog", "hex_color" => "#E2E6E7", "gambar" => null]
         );
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-003"],
+            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-8469"],
             ["nama_warna" => "Antique Green", "hex_color" => "#7D8C82", "gambar" => null]
         );
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-004"],
-            ["nama_warna" => "Soft Teal", "hex_color" => "#829A9E", "gambar" => null]
+            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-10678"],
+            ["nama_warna" => "Space", "hex_color" => "#D6CEBE", "gambar" => null]
         );
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-005"],
-            ["nama_warna" => "Warm Sand", "hex_color" => "#D8CBB5", "gambar" => null]
+            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-1624"],
+            ["nama_warna" => "Classic White", "hex_color" => "#F8F5EC", "gambar" => null]
+        );
+        Warna::query()->updateOrCreate(
+            ["id_produk" => $produkInterior->id_produk, "kode_warna" => "JTN-8470"],
+            ["nama_warna" => "Green Leaf", "hex_color" => "#5F6B5A", "gambar" => null]
         );
 
         // ─── Colors for Jotashield Antifade (Eksterior) ─────────────────
@@ -131,17 +131,17 @@ class DatabaseSeeder extends Seeder
             ["nama_warna" => "Stone Gray", "hex_color" => "#7F8385", "gambar" => null]
         );
 
-        // ─── Colors for Essence Easy Clean (Interior Ekonomis) ──────────
+        // ─── Colors for Gardex Premium Gloss (Kayu & Besi) ──────────────
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInteriorEkonomis->id_produk, "kode_warna" => "JTN-201"],
+            ["id_produk" => $produkKayuBesi->id_produk, "kode_warna" => "JTN-201"],
             ["nama_warna" => "Cotton Blossom", "hex_color" => "#F7F3EA", "gambar" => null]
         );
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInteriorEkonomis->id_produk, "kode_warna" => "JTN-202"],
+            ["id_produk" => $produkKayuBesi->id_produk, "kode_warna" => "JTN-202"],
             ["nama_warna" => "Silver Breeze", "hex_color" => "#E1E3E2", "gambar" => null]
         );
         Warna::query()->updateOrCreate(
-            ["id_produk" => $produkInteriorEkonomis->id_produk, "kode_warna" => "JTN-203"],
+            ["id_produk" => $produkKayuBesi->id_produk, "kode_warna" => "JTN-203"],
             ["nama_warna" => "Soft Clay", "hex_color" => "#D5C2B1", "gambar" => null]
         );
 
