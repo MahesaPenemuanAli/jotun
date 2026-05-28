@@ -25,7 +25,9 @@ class RiwayatKalkulasi extends Model
         'tanggal_kalkulasi',
         'panjang_dinding',
         'tinggi_dinding',
+        'jumlah_lapisan',
         'hasil_liter',
+        'jumlah_kaleng',
     ];
 
     protected function casts(): array
@@ -35,6 +37,8 @@ class RiwayatKalkulasi extends Model
             'panjang_dinding' => 'decimal:2',
             'tinggi_dinding' => 'decimal:2',
             'hasil_liter' => 'decimal:2',
+            'jumlah_lapisan' => 'integer',
+            'jumlah_kaleng' => 'integer',
         ];
     }
 

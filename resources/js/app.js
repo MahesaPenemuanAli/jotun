@@ -35,6 +35,88 @@ if (calculator) {
     calculatePaint();
 }
 
+// ─── CALCULATOR PAGE: WALL SVG VISUALIZATION ────────────────────────────
+const calcForm = document.querySelector("[data-paint-calculator-form]");
+if (calcForm) {
+    const fLength = calcForm.querySelector('#panjang_dinding');
+    const fHeight = calcForm.querySelector('#tinggi_dinding');
+    const fCoats = calcForm.querySelector('#jumlah_lapisan');
+    const fProduct = calcForm.querySelector('#id_produk');
+    
+    const wallRect = document.getElementById('wallRect');
+    const wallWidthLabel = document.getElementById('wallWidthLabel');
+    const wallHeightLabel = document.getElementById('wallHeightLabel');
+    const wallAreaLabel = document.getElementById('wallAreaLabel');
+    const calcArea = document.getElementById('calcArea');
+    const calcPaintArea = document.getElementById('calcPaintArea');
+    const calcLiters = document.getElementById('calcLiters');
+    const calcCans = document.getElementById('calcCans');
+
+    const updateCalcViz = () => {
+        const l = Math.max(parseFloat(fLength?.value) || 0, 0.1);
+        const h = Math.max(parseFloat(fHeight?.value) || 0, 0.1);
+        const coats = parseInt(fCoats?.value) || 2;
+        const selectedOption = fProduct?.selectedOptions[0];
+        const spread = parseFloat(selectedOption?.dataset?.spread || '10');
+
+        const area = l * h;
+        const paintArea = area * coats;
+        const liters = spread > 0 ? paintArea / spread : 0;
+        const cans = Math.max(1, Math.ceil(liters / 2.5));
+
+        // Update SVG proportions (maintain within 300x200 viewbox)
+        const maxW = 240, maxH = 160;
+        const ratio = l / h;
+        let rw, rh;
+        if (ratio > maxW / maxH) {
+            rw = maxW;
+            rh = maxW / ratio;
+        } else {
+            rh = maxH;
+            rw = maxH * ratio;
+        }
+        const rx = (300 - rw) / 2;
+        const ry = (180 - rh) / 2 + 10;
+
+        if (wallRect) {
+            wallRect.setAttribute('x', rx);
+            wallRect.setAttribute('y', ry);
+            wallRect.setAttribute('width', rw);
+            wallRect.setAttribute('height', rh);
+        }
+        if (wallWidthLabel) {
+            wallWidthLabel.textContent = `${l.toFixed(1)} m`;
+            wallWidthLabel.setAttribute('x', rx + rw / 2);
+            wallWidthLabel.setAttribute('y', ry + rh + 18);
+        }
+        if (wallHeightLabel) {
+            wallHeightLabel.textContent = `${h.toFixed(1)} m`;
+            const hx = rx - 12;
+            const hy = ry + rh / 2;
+            wallHeightLabel.setAttribute('x', hx);
+            wallHeightLabel.setAttribute('y', hy);
+            wallHeightLabel.setAttribute('transform', `rotate(-90, ${hx}, ${hy})`);
+        }
+        if (wallAreaLabel) {
+            wallAreaLabel.textContent = `${area.toFixed(1)} m²`;
+            wallAreaLabel.setAttribute('x', rx + rw / 2);
+            wallAreaLabel.setAttribute('y', ry + rh / 2 + 6);
+        }
+
+        // Update result cards
+        if (calcArea) calcArea.textContent = area.toFixed(1);
+        if (calcPaintArea) calcPaintArea.textContent = paintArea.toFixed(1);
+        if (calcLiters) calcLiters.textContent = liters.toFixed(1);
+        if (calcCans) calcCans.textContent = cans;
+    };
+
+    fLength?.addEventListener('input', updateCalcViz);
+    fHeight?.addEventListener('input', updateCalcViz);
+    fCoats?.addEventListener('change', updateCalcViz);
+    fProduct?.addEventListener('change', updateCalcViz);
+    updateCalcViz();
+}
+
 // ─── JOTUN COLOR STUDIO - TINTING MIXER & INTERACTIVE SYSTEM ─────────────
 const studioForm = document.querySelector("[data-tinting-studio-form]");
 if (studioForm) {

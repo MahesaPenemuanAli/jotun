@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pelanggan extends Model
@@ -20,10 +21,16 @@ class Pelanggan extends Model
 
     protected $fillable = [
         'id_pelanggan',
+        'user_id',
         'nama_pelanggan',
         'no_hp',
         'email',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function requestTinting(): HasMany
     {

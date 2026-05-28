@@ -30,10 +30,33 @@
 
                 <nav class="nav-links" aria-label="Navigasi utama">
                     <a href="{{ route('home') }}">Beranda</a>
-                    <a href="{{ route('catalog.index') }}">Katalog Produk</a>
-                    <a href="{{ route('calculator.create') }}">Kalkulator Cat</a>
-                    <a href="{{ route('tinting.create') }}" class="nav-accent">Color Studio (Tinting)</a>
-                    <a href="{{ route('home') }}#lokasi">Lokasi & Kontak</a>
+                    <a href="{{ route('catalog.index') }}">Katalog</a>
+                    <a href="{{ route('calculator.create') }}">Kalkulator</a>
+                    <a href="{{ route('tinting.create') }}" class="nav-accent">Color Studio</a>
+                    <a href="{{ route('home') }}#lokasi">Lokasi</a>
+
+                    @auth
+                        <div class="user-menu-wrapper">
+                            <button class="user-menu-trigger" id="userMenuTrigger" aria-expanded="false" aria-haspopup="true">
+                                <span class="user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                                <span class="user-name-text">{{ Str::limit(Auth::user()->name, 12) }}</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <a href="{{ route('pelanggan.dashboard') }}">Dashboard</a>
+                                <a href="{{ route('pelanggan.profil') }}">Profil Saya</a>
+                                <a href="{{ route('pelanggan.riwayat.kalkulasi') }}">Riwayat Kalkulasi</a>
+                                <a href="{{ route('pelanggan.riwayat.tinting') }}">Riwayat Tinting</a>
+                                <hr>
+                                <form method="POST" action="{{ route('pelanggan.logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-logout">Keluar</button>
+                                </form>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('pelanggan.login') }}" class="nav-login-btn">Masuk</a>
+                    @endauth
                 </nav>
             </div>
         </header>
@@ -50,10 +73,27 @@
                     <p style="font-size: 0.85rem; color: var(--muted);"><strong>Alamat:</strong> Kompleks, Jl. Graha Metropolitan No. 85, Helvetia, Kec. Sunggal, Kabupaten Deli Serdang, Sumatera Utara</p>
                 </div>
                 <div class="footer-copyright">
-                    <span>© {{ date('Y') }} Jotun Paint Center Graha Metropolitan. Hak Cipta Dilindungi.</span>
+                    <span>&copy; {{ date('Y') }} Jotun Paint Center Graha Metropolitan. Hak Cipta Dilindungi.</span>
                 </div>
             </div>
         </footer>
     </div>
+
+    <script>
+        // User dropdown toggle
+        const trigger = document.getElementById('userMenuTrigger');
+        const dropdown = document.getElementById('userDropdown');
+        if (trigger && dropdown) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const open = dropdown.classList.toggle('open');
+                trigger.setAttribute('aria-expanded', open);
+            });
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('open');
+                trigger?.setAttribute('aria-expanded', 'false');
+            });
+        }
+    </script>
 </body>
 </html>

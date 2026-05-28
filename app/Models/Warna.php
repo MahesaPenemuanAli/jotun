@@ -25,6 +25,7 @@ class Warna extends Model
         'kode_warna',
         'nama_warna',
         'hex_color',
+        'kategori_warna',
         'gambar',
     ];
 

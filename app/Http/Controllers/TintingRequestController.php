@@ -10,6 +10,7 @@ use App\Models\Warna;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TintingRequestController extends Controller
@@ -33,27 +34,44 @@ class TintingRequestController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            "nama_pelanggan" => ["required", "string", "max:255"],
-            "no_hp" => ["required", "string", "max:30"],
-            "email" => ["nullable", "email", "max:255"],
+        $user = Auth::user();
+        $isLoggedIn = $user !== null;
+
+        $rules = [
             "id_produk" => ["required", "exists:katalog_produk,id_produk"],
             "id_warna" => ["required", "exists:warna,id_warna"],
             "jumlah_kaleng" => ["required", "integer", "min:1", "max:100"],
-        ]);
+        ];
 
-        $requestTinting = DB::transaction(function () use (
-            $validated,
-        ): RequestTinting {
-            $customerLookup = filled($validated["email"] ?? null)
-                ? ["email" => $validated["email"]]
-                : ["no_hp" => $validated["no_hp"]];
+        if (! $isLoggedIn) {
+            $rules["nama_pelanggan"] = ["required", "string", "max:255"];
+            $rules["no_hp"] = ["required", "string", "max:30"];
+            $rules["email"] = ["nullable", "email", "max:255"];
+        }
 
-            $customer = Pelanggan::query()->updateOrCreate($customerLookup, [
-                "nama_pelanggan" => $validated["nama_pelanggan"],
-                "no_hp" => $validated["no_hp"],
-                "email" => $validated["email"] ?? null,
-            ]);
+        $validated = $request->validate($rules);
+
+        $requestTinting = DB::transaction(function () use ($validated, $user, $isLoggedIn): RequestTinting {
+            if ($isLoggedIn) {
+                $customer = $user->pelanggan;
+                if (! $customer) {
+                    $customer = Pelanggan::create([
+                        'user_id' => $user->id,
+                        'nama_pelanggan' => $user->name,
+                        'email' => $user->email,
+                    ]);
+                }
+            } else {
+                $customerLookup = filled($validated["email"] ?? null)
+                    ? ["email" => $validated["email"]]
+                    : ["no_hp" => $validated["no_hp"]];
+
+                $customer = Pelanggan::query()->updateOrCreate($customerLookup, [
+                    "nama_pelanggan" => $validated["nama_pelanggan"],
+                    "no_hp" => $validated["no_hp"],
+                    "email" => $validated["email"] ?? null,
+                ]);
+            }
 
             $color = Warna::query()
                 ->with("produk")
@@ -81,7 +99,7 @@ class TintingRequestController extends Controller
             ->route("tinting.create")
             ->with(
                 "success",
-                "Request tinting berhasil dikirim. Kode request: " .
+                "Request tinting berhasil dikirim! Kode request: " .
                     $requestTinting->id_request,
             );
     }

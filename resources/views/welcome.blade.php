@@ -100,13 +100,7 @@
     <section class="section" style="background-color: var(--surface);">
         <div class="container hero-grid" style="grid-template-columns: 0.95fr 1.05fr; gap: 64px;">
             <div class="hero-visual" style="height: 380px;" aria-hidden="true">
-                <div style="width: 85%; height: 85%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed var(--line); border-radius: var(--radius-md); padding: 24px; background: linear-gradient(135deg, var(--jotun-yellow-soft) 0%, var(--surface) 100%);">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--jotun-yellow-hover)" stroke-width="1.5" style="margin-bottom: 16px;">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                    <strong style="font-size: 1.25rem; font-weight: 800; color: var(--obsidian); margin-bottom: 4px;">Jotun Multicolor System</strong>
-                    <span style="font-size: 0.85rem; color: var(--muted); text-align: center;">Dispenser Pencampur Cat Terkomputerisasi Global</span>
-                </div>
+                <img src="/images/tinting-process.webp" alt="Proses tinting warna Jotun Multicolor" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md);">
             </div>
             
             <div>
@@ -154,7 +148,7 @@
                 <!-- Product 1 -->
                 <article class="product-card">
                     <div class="product-visual-box">
-                        <div class="product-visual-placeholder">Jotashield</div>
+                        <img class="product-image" src="/images/jotashield.webp" alt="Jotashield Antifade Colours">
                     </div>
                     <div class="product-meta">
                         <span class="product-cat">Eksterior</span>
@@ -173,7 +167,7 @@
                 <!-- Product 2 -->
                 <article class="product-card">
                     <div class="product-visual-box">
-                        <div class="product-visual-placeholder">Majestic</div>
+                        <img class="product-image" src="/images/majestic-sense.webp" alt="Majestic Sense">
                     </div>
                     <div class="product-meta">
                         <span class="product-cat">Interior Premium</span>
@@ -192,7 +186,7 @@
                 <!-- Product 3 -->
                 <article class="product-card">
                     <div class="product-visual-box">
-                        <div class="product-visual-placeholder">Gardex</div>
+                        <img class="product-image" src="/images/gardex.webp" alt="Gardex Premium Gloss">
                     </div>
                     <div class="product-meta">
                         <span class="product-cat">Kayu & Besi</span>
