@@ -1,0 +1,266 @@
+<x-layouts.public title="Jotun Color Studio | Pencampuran Warna Premium" description="Eksperimen dengan campuran warna cat Jotun di Color Studio interaktif. Pilih produk, campur pigment, sesuaikan shade, dan kirim request tinting Anda secara instan.">
+    <!-- Header Hero -->
+    <section class="hero" style="padding: 80px 0 48px; background-color: var(--surface); border-bottom: 1px solid var(--line);">
+        <div class="container">
+            <span class="eyebrow">Studio Pencampuran Warna</span>
+            <h1 style="font-size: 2.8rem; margin-bottom: 16px;">Jotun Color Studio</h1>
+            <p style="color: var(--muted); font-size: 1.1rem; max-width: 800px; margin-bottom: 0;">
+                Eksperimen secara visual dengan jutaan kombinasi warna cat premium kami. Pilih jenis cat, tentukan warna dasar Anda, dan sesuaikan kehangatan serta kegelapan warna untuk mendapatkan racikan pigmen cat kustom yang paling mewakili kepribadian Anda.
+            </p>
+        </div>
+    </section>
+
+    <!-- Interactive Workspace Section -->
+    <section class="section alt-bg" style="padding: 56px 0;">
+        <div class="container">
+            <form class="color-studio" method="POST" action="{{ route('tinting.store') }}" data-tinting-studio-form>
+                @csrf
+
+                <!-- Left Panel: Workplace (Steps & Visualizer) -->
+                <div class="studio-workplace">
+                    <!-- Success & Error Alerts -->
+                    @if (session('success'))
+                        <div class="alert success" style="margin-bottom: 0; width: 100%;">
+                            <strong>Pemesanan Berhasil!</strong><br>
+                            {{ session('success') }}. Kami akan segera menghubungi nomor HP Anda untuk melakukan konfirmasi waktu pengambilan cat kustom Anda.
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert error" style="margin-bottom: 0; width: 100%;">
+                            <strong>Periksa Kembali Input Anda:</strong>
+                            <ul style="margin-top: 4px; padding-left: 16px;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <!-- Step 1: Pilih Produk Cat -->
+                    <div class="studio-step">
+                        <h3><span class="step-number">1</span> Pilih Tipe Cat Premium</h3>
+                        <div class="studio-product-grid">
+                            @forelse ($products as $product)
+                                <div class="studio-product-card @if($loop->first) active @endif" 
+                                     data-product-card-id="{{ $product->id_produk }}"
+                                     data-product-price="{{ $product->harga }}"
+                                     data-product-category="{{ $product->kategori }}"
+                                     data-product-spread="{{ $product->daya_sebar ?? '10' }}">
+                                    <div class="active-badge" aria-hidden="true">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0E1118" stroke-width="4">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                    </div>
+                                    <h4>{{ $product->nama_produk }}</h4>
+                                    <p>{{ $product->kategori }} · Rp{{ number_format($product->harga, 0, ',', '.') }}</p>
+                                </div>
+                            @empty
+                                <div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 12px; border: 1px dashed var(--line); border-radius: var(--radius-sm);">
+                                    Produk cat belum tersedia
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Pilih Warna Dasar -->
+                    <div class="studio-step">
+                        <h3><span class="step-number">2</span> Pilih Warna Dasar Cat</h3>
+                        <div class="studio-color-grid">
+                            @forelse ($products as $product)
+                                @foreach ($product->warna as $color)
+                                    <div class="studio-color-chip" 
+                                         style="background-color: {{ $color->hex_color ?: '#FDB913' }}"
+                                         title="{{ $color->nama_warna }} ({{ $color->kode_warna }})"
+                                         data-color-chip-id="{{ $color->id_warna }}"
+                                         data-color-chip-product="{{ $product->id_produk }}"
+                                         data-color-chip-hex="{{ $color->hex_color ?: '#FDB913' }}"
+                                         data-color-chip-name="{{ $color->nama_warna }}"
+                                         data-color-chip-code="{{ $color->kode_warna }}">
+                                    </div>
+                                @endforeach
+                            @empty
+                                <div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 12px; border: 1px dashed var(--line); border-radius: var(--radius-sm);">
+                                    Pilihan warna belum tersedia
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Visual Preview & Shade Blender -->
+                    <div class="studio-step" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <h3><span class="step-number">3</span> Eksperimen Shade & Visualisasi Dinding</h3>
+                        
+                        <div class="studio-preview-box">
+                            <!-- Live Room Preview Visualizer -->
+                            <div class="room-preview" id="roomPreviewCanvas">
+                                <span class="preview-status" id="activeColorBadge">Classic White (JTN-001)</span>
+                                
+                                <!-- Sleek Room Outline Overlay SVG -->
+                                <svg class="room-overlay-svg" viewBox="0 0 800 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Back Wall Layer (Transparent window to allow background color to show through) -->
+                                    <path d="M 0 0 L 800 0 L 800 600 L 0 600 Z" fill="rgba(0,0,0,0.05)" />
+                                    <!-- Window Frame -->
+                                    <rect x="480" y="80" width="220" height="240" rx="4" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="6" />
+                                    <line x1="590" y1="80" x2="590" y2="320" stroke="#E5E7EB" stroke-width="4" />
+                                    <line x1="480" y1="200" x2="700" y2="200" stroke="#E5E7EB" stroke-width="4" />
+                                    <!-- Window glass sheen -->
+                                    <rect x="486" y="86" width="98" height="108" fill="rgba(255,255,255,0.25)" />
+                                    <!-- Floor Shadow & Perspective Wall lines -->
+                                    <polygon points="0,480 800,480 800,600 0,600" fill="#EAEAEF" />
+                                    <line x1="0" y1="480" x2="800" y2="480" stroke="#D1D5DB" stroke-width="3" />
+                                    <!-- Baseboard outline -->
+                                    <rect x="0" y="468" width="800" height="12" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1" />
+                                    <!-- Plant pot outline / Minimal interior -->
+                                    <path d="M 120 480 L 150 480 L 142 420 L 128 420 Z" fill="#D1D5DB" />
+                                    <path d="M 115 420 C 100 380 70 390 90 350 C 110 310 135 340 135 340 C 135 340 160 310 180 350 C 200 390 170 380 155 420 Z" fill="#7D8C82" opacity="0.9" />
+                                    <!-- Modern Minimalist Chair -->
+                                    <rect x="250" y="380" width="100" height="16" rx="4" fill="#1E2229" />
+                                    <rect x="270" y="396" width="60" height="84" fill="#334155" />
+                                    <line x1="260" y1="396" x2="260" y2="480" stroke="#1E2229" stroke-width="6" stroke-linecap="round" />
+                                    <line x1="340" y1="396" x2="340" y2="480" stroke="#1E2229" stroke-width="6" stroke-linecap="round" />
+                                    <line x1="280" y1="396" x2="280" y2="480" stroke="#1E2229" stroke-width="4" />
+                                    <line x1="320" y1="396" x2="320" y2="480" stroke="#1E2229" stroke-width="4" />
+                                    <!-- Sleek Shadow under chair -->
+                                    <ellipse cx="300" cy="480" rx="55" ry="8" fill="rgba(0,0,0,0.08)" />
+                                </svg>
+                            </div>
+
+                            <!-- Custom Pigment Mixer Shade Blender -->
+                            <div class="shade-blender">
+                                <div>
+                                    <h4>Campur & Blender Shade</h4>
+                                    
+                                    <div class="slider-group">
+                                        <!-- Lightness Slider -->
+                                        <div class="slider-field">
+                                            <div class="slider-header">
+                                                <span>Keterangan Warna (Lightness)</span>
+                                                <span id="lightnessVal">100%</span>
+                                            </div>
+                                            <input type="range" class="studio-slider" id="sliderLightness" min="40" max="160" value="100" aria-label="Keterangan Warna">
+                                        </div>
+
+                                        <!-- Warmth Slider -->
+                                        <div class="slider-field">
+                                            <div class="slider-header">
+                                                <span>Kehangatan Warna (Warmth)</span>
+                                                <span id="warmthVal">Karakter Asli</span>
+                                            </div>
+                                            <input type="range" class="studio-slider" id="sliderWarmth" min="-30" max="30" value="0" aria-label="Kehangatan Warna">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Formula Display Output -->
+                                <div class="formula-display">
+                                    <h5>Komposisi Racikan Pigmen Cat</h5>
+                                    <div class="formula-bars">
+                                        <!-- Base Paint -->
+                                        <div class="formula-bar-item">
+                                            <span class="formula-label">Base Cat</span>
+                                            <div class="formula-track">
+                                                <div class="formula-fill base" id="formulaBase" style="width: 90%;"></div>
+                                            </div>
+                                            <span class="formula-value" id="formulaBaseText">90%</span>
+                                        </div>
+                                        <!-- Pigment Ochre -->
+                                        <div class="formula-bar-item">
+                                            <span class="formula-label">Pigmen Kuning</span>
+                                            <div class="formula-track">
+                                                <div class="formula-fill tint-a" id="formulaTintA" style="width: 7%;"></div>
+                                            </div>
+                                            <span class="formula-value" id="formulaTintAText">7%</span>
+                                        </div>
+                                        <!-- Pigment Red Oxide -->
+                                        <div class="formula-bar-item">
+                                            <span class="formula-label">Pigmen Merah</span>
+                                            <div class="formula-track">
+                                                <div class="formula-fill tint-b" id="formulaTintB" style="width: 3%;"></div>
+                                            </div>
+                                            <span class="formula-value" id="formulaTintBText">3%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Controls & Customer Form -->
+                <div class="studio-control-panel">
+                    <div class="studio-step">
+                        <h3><span class="step-number">4</span> Detail Pemesanan Cat</h3>
+                        
+                        <div class="field full-field" style="margin-top: 16px;">
+                            <label for="jumlah_kaleng">Jumlah Kaleng Cat</label>
+                            <input id="jumlah_kaleng" name="jumlah_kaleng" type="number" min="1" max="100" value="{{ old('jumlah_kaleng', 1) }}" required style="width: 100%;">
+                        </div>
+
+                        <div class="field full-field" style="margin-top: 16px;">
+                            <label for="can_size">Ukuran Kemasan Cat</label>
+                            <select id="can_size" name="can_size" style="width: 100%;">
+                                <option value="2.5" selected>2.5 Liter (Small Can)</option>
+                                <option value="20">20 Liter (Large Pail)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="studio-step" style="margin-top: 36px; flex-grow: 1;">
+                        <h3><span class="step-number">5</span> Informasi Kontak Pelanggan</h3>
+                        
+                        <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
+                            <div class="field">
+                                <label for="nama_pelanggan">Nama Lengkap</label>
+                                <input id="nama_pelanggan" name="nama_pelanggan" type="text" value="{{ old('nama_pelanggan') }}" placeholder="Contoh: Budi Santoso" required style="width: 100%;">
+                            </div>
+
+                            <div class="field">
+                                <label for="no_hp">Nomor HP / WhatsApp</label>
+                                <input id="no_hp" name="no_hp" type="text" value="{{ old('no_hp') }}" placeholder="Contoh: 0812xxxxxxxx" required style="width: 100%;">
+                            </div>
+
+                            <div class="field">
+                                <label for="email">Alamat Email (Opsional)</label>
+                                <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="budi@example.com" style="width: 100%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Inputs Synced via Client JS for DB submission -->
+                    <div style="display: none;">
+                        <select id="id_produk" name="id_produk" required>
+                            @foreach ($products as $product)
+                                <option value="{{ $product->id_produk }}" @selected(old('id_produk') === $product->id_produk)>
+                                    {{ $product->nama_produk }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <select id="id_warna" name="id_warna" required>
+                            @foreach ($products as $product)
+                                @foreach ($product->warna as $color)
+                                    <option value="{{ $color->id_warna }}" data-product="{{ $product->id_produk }}" @selected(old('id_warna') === $color->id_warna)>
+                                        {{ $color->nama_warna }}
+                                    </option>
+                                @endforeach
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Checkout & Live Price Estimate -->
+                    <div class="studio-checkout">
+                        <div class="studio-price-box">
+                            <span>Estimasi Total Pembayaran</span>
+                            <strong id="studioPriceEstimate">Rp0</strong>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit" style="width: 100%; height: 50px; font-size: 1rem; font-weight: 700;">
+                            Kirim Request Tinting Kustom
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+</x-layouts.public>
