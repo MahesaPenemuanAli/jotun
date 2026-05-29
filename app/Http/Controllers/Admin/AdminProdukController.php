@@ -16,6 +16,8 @@ class AdminProdukController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
         $category = $request->query('kategori');
+        $tintable = $request->query('tintable');
+        $status = $request->query('status');
 
         $products = KatalogProduk::query()
             ->withCount('warna')
@@ -28,9 +30,15 @@ class AdminProdukController extends Controller
             ->when(filled($category), function ($query) use ($category): void {
                 $query->where('kategori', $category);
             })
+            ->when($tintable !== null, function ($query) use ($tintable): void {
+                $query->where('is_tintable', $tintable === '1');
+            })
+            ->when(filled($status), function ($query) use ($status): void {
+                $query->where('status_produk', $status);
+            })
             ->orderBy('kategori')
             ->orderBy('nama_produk')
-            ->paginate(10)
+            ->paginate(15)
             ->withQueryString();
 
         $categories = KatalogProduk::query()
@@ -45,6 +53,8 @@ class AdminProdukController extends Controller
             'categories' => $categories,
             'search' => $search,
             'category' => $category,
+            'tintable' => $tintable,
+            'status' => $status,
         ]);
     }
 
@@ -60,6 +70,9 @@ class AdminProdukController extends Controller
             'kategori' => ['required', 'string', 'max:255'],
             'harga' => ['required', 'integer', 'min:0'],
             'daya_sebar' => ['nullable', 'numeric', 'min:0'],
+            'is_tintable' => ['nullable'],
+            'status_produk' => ['required', 'string', 'in:aktif,nonaktif'],
+            'tipe_produk' => ['nullable', 'string', 'in:finishing,primer,waterproofing'],
             'gambar_mode' => ['nullable', 'string', 'in:url,upload'],
             'gambar_url' => ['nullable', 'url', 'max:2048'],
             'gambar_file' => ['nullable', 'image', 'max:2048'],
@@ -73,6 +86,9 @@ class AdminProdukController extends Controller
             'kategori' => $validated['kategori'],
             'harga' => $validated['harga'],
             'daya_sebar' => $validated['daya_sebar'] ?? null,
+            'is_tintable' => $request->boolean('is_tintable'),
+            'status_produk' => $validated['status_produk'],
+            'tipe_produk' => $validated['tipe_produk'] ?? null,
             'gambar' => $gambar,
         ]);
 
@@ -99,6 +115,9 @@ class AdminProdukController extends Controller
             'kategori' => ['required', 'string', 'max:255'],
             'harga' => ['required', 'integer', 'min:0'],
             'daya_sebar' => ['nullable', 'numeric', 'min:0'],
+            'is_tintable' => ['nullable'],
+            'status_produk' => ['required', 'string', 'in:aktif,nonaktif'],
+            'tipe_produk' => ['nullable', 'string', 'in:finishing,primer,waterproofing'],
             'gambar_mode' => ['nullable', 'string', 'in:url,upload'],
             'gambar_url' => ['nullable', 'url', 'max:2048'],
             'gambar_file' => ['nullable', 'image', 'max:2048'],
@@ -111,6 +130,9 @@ class AdminProdukController extends Controller
             'kategori' => $validated['kategori'],
             'harga' => $validated['harga'],
             'daya_sebar' => $validated['daya_sebar'] ?? null,
+            'is_tintable' => $request->boolean('is_tintable'),
+            'status_produk' => $validated['status_produk'],
+            'tipe_produk' => $validated['tipe_produk'] ?? null,
             'gambar' => $gambar,
         ]);
 
@@ -123,7 +145,6 @@ class AdminProdukController extends Controller
     {
         $product = KatalogProduk::whereKey($id)->firstOrFail();
 
-        // Delete uploaded image if it exists in storage
         if ($product->gambar && ! str_starts_with($product->gambar, 'http')) {
             Storage::disk('public')->delete($product->gambar);
         }
@@ -135,9 +156,6 @@ class AdminProdukController extends Controller
             ->with('success', 'Produk berhasil dihapus.');
     }
 
-    /**
-     * Resolve gambar from URL or uploaded file.
-     */
     private function resolveGambar(Request $request): ?string
     {
         $mode = $request->input('gambar_mode', 'url');

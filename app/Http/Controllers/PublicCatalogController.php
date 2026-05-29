@@ -12,8 +12,10 @@ class PublicCatalogController extends Controller
     {
         $search = trim((string) $request->query("q", ""));
         $category = $request->query("kategori");
+        $tintable = $request->query("tintable");
 
         $products = KatalogProduk::query()
+            ->aktif()
             ->with("warna")
             ->when($search !== "", function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
@@ -25,12 +27,16 @@ class PublicCatalogController extends Controller
             ->when(filled($category), function ($query) use ($category): void {
                 $query->where("kategori", $category);
             })
+            ->when($tintable !== null, function ($query) use ($tintable): void {
+                $query->where("is_tintable", $tintable === '1');
+            })
             ->orderBy("kategori")
             ->orderBy("nama_produk")
-            ->paginate(9)
+            ->paginate(12)
             ->withQueryString();
 
         $categories = KatalogProduk::query()
+            ->aktif()
             ->select("kategori")
             ->whereNotNull("kategori")
             ->distinct()
@@ -42,6 +48,7 @@ class PublicCatalogController extends Controller
             "categories" => $categories,
             "search" => $search,
             "category" => $category,
+            "tintable" => $tintable,
         ]);
     }
 

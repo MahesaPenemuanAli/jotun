@@ -21,7 +21,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="kategori">Kategori Penggunaan</label>
+                    <label for="kategori">Kategori</label>
                     <select id="kategori" name="kategori">
                         <option value="">Semua Kategori</option>
                         @foreach ($categories as $item)
@@ -30,9 +30,18 @@
                     </select>
                 </div>
 
-                <button class="btn btn-primary" type="submit" style="height: 46px; padding: 0 24px;">Filter Produk</button>
-                
-                @if ($search !== '' || filled($category))
+                <div class="field">
+                    <label for="tintable">Tinting</label>
+                    <select id="tintable" name="tintable">
+                        <option value="">Semua</option>
+                        <option value="1" @selected(($tintable ?? '') === '1')>Bisa Tinting</option>
+                        <option value="0" @selected(($tintable ?? '') === '0')>Non-Tinting</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" type="submit" style="height: 46px; padding: 0 24px;">Filter</button>
+
+                @if ($search !== '' || filled($category) || $tintable !== null)
                     <a class="btn btn-secondary" href="{{ route('catalog.index') }}" style="height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 20px;">Reset</a>
                 @endif
             </form>
@@ -40,7 +49,7 @@
             @if ($products->isEmpty())
                 <div class="empty-state">
                     <h3>Produk Tidak Ditemukan</h3>
-                    <p>Maaf, produk cat yang Anda cari belum tersedia di cabang kami saat ini. Silakan hubungi admin toko untuk berkonsultasi warna dan produk alternatif.</p>
+                    <p>Maaf, produk cat yang Anda cari belum tersedia di cabang kami saat ini.</p>
                 </div>
             @else
                 <!-- Product Grid -->
@@ -57,36 +66,47 @@
 
                             <div class="product-meta">
                                 <span class="product-cat">{{ $product->kategori }}</span>
+                                @if ($product->is_tintable)
+                                    <span class="product-cat" style="background: var(--jotun-yellow-soft); color: var(--jotun-yellow-hover);">Tinting</span>
+                                @else
+                                    <span class="product-cat" style="background: #f1f5f9; color: #64748b;">{{ ucfirst($product->tipe_produk ?? 'Pendukung') }}</span>
+                                @endif
                                 <span class="product-price">Rp{{ number_format($product->harga, 0, ',', '.') }}</span>
                             </div>
 
                             <h3>{{ $product->nama_produk }}</h3>
                             <p>Daya sebar teoretis sekitar {{ $product->daya_sebar ?? '10' }} m²/liter per lapis.</p>
 
-                            <div class="product-swatches" aria-label="Warna tersedia">
-                                @forelse ($product->warna->take(5) as $color)
-                                    <span title="{{ $color->nama_warna }} ({{ $color->kode_warna }})" data-color="{{ $color->hex_color ?: '#FDB913' }}" style="background-color: {{ $color->hex_color ?: '#FDB913' }}"></span>
-                                @empty
-                                    <span title="Hubungi kami untuk tinting warna" data-color="#E5E7EB" style="background-color: #E5E7EB"></span>
-                                @endforelse
-                            </div>
+                            @if ($product->is_tintable)
+                                <div class="product-swatches" aria-label="Warna tersedia">
+                                    @forelse ($product->warna->take(5) as $color)
+                                        <span title="{{ $color->nama_warna }} ({{ $color->kode_warna }})" style="background-color: {{ $color->hex_color ?: '#FDB913' }}"></span>
+                                    @empty
+                                        <span title="Hubungi kami untuk tinting warna" style="background-color: #E5E7EB"></span>
+                                    @endforelse
+                                </div>
+                            @else
+                                <p style="font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 8px;">
+                                    Produk pendukung — tidak tersedia untuk tinting warna.
+                                </p>
+                            @endif
 
-                            <div style="margin-top: auto;">
-                                <a class="card-link" href="{{ route('catalog.show', $product->id_produk) }}">Detail & Pilihan Warna</a>
+                            <div style="margin-top: auto; display:flex; gap:8px; flex-wrap:wrap;">
+                                <a class="card-link" href="{{ route('catalog.show', $product->id_produk) }}">Detail Produk</a>
+                                @if ($product->is_tintable)
+                                    <a class="card-link" href="{{ route('tinting.create') }}" style="background:var(--jotun-yellow);color:#000;">Request Tinting</a>
+                                @endif
                             </div>
                         </article>
                     @endforeach
                 </div>
 
-                <!-- Simple Pagination -->
                 @if ($products->hasPages())
                     <nav class="simple-pagination" aria-label="Navigasi katalog">
                         @if ($products->previousPageUrl())
                             <a class="btn btn-secondary" href="{{ $products->previousPageUrl() }}" style="padding: 8px 16px; font-size: 0.85rem;">Sebelumnya</a>
                         @endif
-
                         <span style="font-size: 0.9rem; color: var(--muted); font-weight: 600;">Halaman {{ $products->currentPage() }} dari {{ $products->lastPage() }}</span>
-
                         @if ($products->nextPageUrl())
                             <a class="btn btn-secondary" href="{{ $products->nextPageUrl() }}" style="padding: 8px 16px; font-size: 0.85rem;">Berikutnya</a>
                         @endif

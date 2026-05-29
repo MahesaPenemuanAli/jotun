@@ -18,6 +18,8 @@ class TintingRequestController extends Controller
     public function create(): View
     {
         $products = KatalogProduk::query()
+            ->aktif()
+            ->tintable()
             ->with([
                 "warna" => function ($query): void {
                     $query->orderBy("nama_warna");
@@ -51,7 +53,20 @@ class TintingRequestController extends Controller
 
         $validated = $request->validate($rules);
 
-        $requestTinting = DB::transaction(function () use ($validated, $user, $isLoggedIn): RequestTinting {
+        // Verify product is tintable
+        $product = KatalogProduk::query()
+            ->aktif()
+            ->tintable()
+            ->whereKey($validated["id_produk"])
+            ->firstOrFail();
+
+        // Verify color belongs to product
+        $color = Warna::query()
+            ->where("id_produk", $product->id_produk)
+            ->whereKey($validated["id_warna"])
+            ->firstOrFail();
+
+        $requestTinting = DB::transaction(function () use ($validated, $user, $isLoggedIn, $product, $color): RequestTinting {
             if ($isLoggedIn) {
                 $customer = $user->pelanggan;
                 if (! $customer) {
@@ -73,15 +88,9 @@ class TintingRequestController extends Controller
                 ]);
             }
 
-            $color = Warna::query()
-                ->with("produk")
-                ->where("id_produk", $validated["id_produk"])
-                ->whereKey($validated["id_warna"])
-                ->firstOrFail();
-
             $requestTinting = RequestTinting::create([
                 "id_pelanggan" => $customer->id_pelanggan,
-                "id_admin" => $color->produk?->id_admin,
+                "id_admin" => $product->id_admin,
                 "tanggal_request" => now()->toDateString(),
                 "status" => "pending",
             ]);

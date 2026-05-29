@@ -4,7 +4,7 @@
             <span class="eyebrow">Alat Konsultasi Mandiri</span>
             <h1 style="font-size: 2.8rem; margin-bottom: 16px;">Kalkulator Kebutuhan Cat</h1>
             <p style="color: var(--muted); font-size: 1.1rem; max-width: 720px;">
-                Hitung perkiraan volume cat yang dibutuhkan sebelum Anda melakukan pembelian di cabang Graha Metropolitan Deli Serdang.
+                Hitung perkiraan volume cat yang dibutuhkan sebelum Anda melakukan pembelian di cabang Graha Metropolitan.
                 @auth
                     Hasil kalkulasi akan otomatis tersimpan di <a href="{{ route('pelanggan.riwayat.kalkulasi') }}" style="color: var(--jotun-yellow-hover); font-weight:700;">riwayat akun Anda</a>.
                 @endauth
@@ -21,17 +21,42 @@
                     <div class="alert success">{{ session('success') }}</div>
                 @endif
 
+                {{-- Smart Result Card --}}
                 @if (session('calculator_result'))
                     @php($result = session('calculator_result'))
                     <div class="result-card">
-                        <span>Hasil Perhitungan Terakhir Anda</span>
-                        <strong>{{ $result['hasil_liter'] }} Liter Cat</strong>
-                        <p>
-                            Rekomendasi Pembelian: <span style="font-weight: 800; color: var(--obsidian);">{{ $result['jumlah_kaleng'] }} Kaleng (Ukuran 2.5L)</span>
-                        </p>
-                        <p style="font-size: 0.8rem; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 8px; opacity: 0.8;">
-                            Rincian: {{ $result['produk'] }} · Luas Bidang {{ $result['luas_dinding'] }} m² · Pengecatan {{ $result['jumlah_lapisan'] }} Lapis.
-                        </p>
+                        <span>Hasil Perhitungan — {{ $result['produk'] }}</span>
+                        <strong>{{ $result['hasil_liter'] }} Liter Cat Dibutuhkan</strong>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0;font-size:0.85rem;">
+                            <div><span style="color:var(--muted)">Luas Dinding</span><br><strong>{{ $result['luas_dinding'] }} m²</strong></div>
+                            <div><span style="color:var(--muted)">Lapisan</span><br><strong>{{ $result['jumlah_lapisan'] }}x</strong></div>
+                            <div><span style="color:var(--muted)">Daya Sebar</span><br><strong>{{ $result['daya_sebar'] }} m²/L</strong></div>
+                            <div><span style="color:var(--muted)">Total Area</span><br><strong>{{ $result['total_area'] }} m²</strong></div>
+                        </div>
+
+                        @if (!empty($result['rekomendasi']))
+                            <div style="border-top:1px solid rgba(0,0,0,0.08);padding-top:14px;margin-top:8px;">
+                                <strong style="font-size:0.9rem;display:block;margin-bottom:8px;">Rekomendasi Pembelian Kaleng:</strong>
+                                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                    @foreach ($result['rekomendasi'] as $item)
+                                        <span style="background:var(--jotun-yellow-soft);padding:6px 14px;border-radius:6px;font-size:0.85rem;font-weight:600;">
+                                            {{ $item['jumlah'] }}x {{ $item['ukuran'] }}L
+                                            @if ($item['harga'])
+                                                <span style="font-weight:400;color:var(--muted);margin-left:4px;">@ Rp{{ number_format($item['harga'], 0, ',', '.') }}</span>
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </div>
+                                <div style="margin-top:10px;font-size:0.82rem;color:var(--muted);">
+                                    Total cat dibeli: <strong style="color:var(--obsidian)">{{ $result['total_liter_beli'] }}L</strong>
+                                    · Estimasi sisa: <strong>{{ $result['sisa_liter'] }}L</strong>
+                                    @if ($result['estimasi_harga'])
+                                        · Estimasi biaya: <strong style="color:var(--jotun-yellow-hover)">Rp{{ number_format($result['estimasi_harga'], 0, ',', '.') }}</strong>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -72,8 +97,11 @@
                         <label for="id_produk">Tipe Cat & Daya Sebar</label>
                         <select id="id_produk" name="id_produk" required @disabled($products->isEmpty())>
                             @forelse ($products as $product)
-                                <option value="{{ $product->id_produk }}" data-spread="{{ $product->daya_sebar ?: 10 }}" @selected(old('id_produk') === $product->id_produk)>
-                                    {{ $product->nama_produk }} ({{ $product->kategori }}) — {{ $product->daya_sebar ?: 10 }} m²/liter
+                                <option value="{{ $product->id_produk }}"
+                                        data-spread="{{ $product->daya_sebar ?: 10 }}"
+                                        data-sizes='@json($product->ukuranAktif->map(fn($u) => ["liter" => (float)$u->ukuran_liter, "harga" => $u->harga]))'
+                                        @selected(old('id_produk') === $product->id_produk)>
+                                    {{ $product->nama_produk }} ({{ $product->kategori }}{{ $product->tipe_produk !== 'finishing' ? ' · '.ucfirst($product->tipe_produk ?? '') : '' }}) — {{ $product->daya_sebar ?: 10 }} m²/L
                                 </option>
                             @empty
                                 <option value="">Produk cat belum tersedia</option>
@@ -100,7 +128,6 @@
 
                 <!-- Live Visualization -->
                 <div class="calc-visual-section">
-                    <!-- Wall Preview -->
                     <div class="wall-preview-box">
                         <h4 style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; font-weight: 600;">Ilustrasi Bidang Dinding</h4>
                         <svg id="wallSvg" viewBox="0 0 300 200" style="width: 100%; max-width: 300px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg-light);">
@@ -111,7 +138,6 @@
                         </svg>
                     </div>
 
-                    <!-- Result Cards -->
                     <div>
                         <h4 style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; font-weight: 600;">Estimasi Kebutuhan Cat</h4>
                         <div class="calc-results-grid">
@@ -129,9 +155,10 @@
                             </div>
                             <div class="calc-result-item highlight">
                                 <span class="result-num" id="calcCans">2</span>
-                                <span class="result-label">Kaleng (2.5L)</span>
+                                <span class="result-label">Kaleng Dibutuhkan</span>
                             </div>
                         </div>
+                        <div id="calcRecommendation" style="margin-top:12px;font-size:0.82rem;color:var(--muted);"></div>
                     </div>
                 </div>
 

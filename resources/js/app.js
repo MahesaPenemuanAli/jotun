@@ -52,6 +52,39 @@ if (calcForm) {
     const calcLiters = document.getElementById('calcLiters');
     const calcCans = document.getElementById('calcCans');
 
+    const calcRecommendation = document.getElementById('calcRecommendation');
+
+    const calculateCanCombo = (liters, sizes) => {
+        if (!sizes || sizes.length === 0) {
+            const c = Math.max(1, Math.ceil(liters / 2.5));
+            return { items: [{ liter: 2.5, count: c, harga: null }], total: c * 2.5, cans: c };
+        }
+        const sorted = [...sizes].sort((a, b) => b.liter - a.liter);
+        let remaining = liters;
+        const items = [];
+        let total = 0, cans = 0;
+
+        for (const s of sorted) {
+            const count = Math.floor(remaining / s.liter);
+            if (count > 0) {
+                items.push({ liter: s.liter, count, harga: s.harga });
+                remaining -= count * s.liter;
+                total += count * s.liter;
+                cans += count;
+            }
+        }
+        if (remaining > 0.01) {
+            const sortedAsc = [...sizes].sort((a, b) => a.liter - b.liter);
+            const fit = sortedAsc.find(s => s.liter >= remaining) || sortedAsc[sortedAsc.length - 1];
+            const existing = items.find(i => i.liter === fit.liter);
+            if (existing) { existing.count++; } else { items.push({ liter: fit.liter, count: 1, harga: fit.harga }); }
+            total += fit.liter;
+            cans++;
+        }
+        items.sort((a, b) => b.liter - a.liter);
+        return { items, total: Math.round(total * 10) / 10, cans };
+    };
+
     const updateCalcViz = () => {
         const l = Math.max(parseFloat(fLength?.value) || 0, 0.1);
         const h = Math.max(parseFloat(fHeight?.value) || 0, 0.1);
@@ -59,55 +92,38 @@ if (calcForm) {
         const selectedOption = fProduct?.selectedOptions[0];
         const spread = parseFloat(selectedOption?.dataset?.spread || '10');
 
+        let sizes = [];
+        try { sizes = JSON.parse(selectedOption?.dataset?.sizes || '[]'); } catch (e) {}
+
         const area = l * h;
         const paintArea = area * coats;
         const liters = spread > 0 ? paintArea / spread : 0;
-        const cans = Math.max(1, Math.ceil(liters / 2.5));
+        const combo = calculateCanCombo(liters, sizes);
 
-        // Update SVG proportions (maintain within 300x200 viewbox)
+        // Update SVG proportions
         const maxW = 240, maxH = 160;
         const ratio = l / h;
         let rw, rh;
-        if (ratio > maxW / maxH) {
-            rw = maxW;
-            rh = maxW / ratio;
-        } else {
-            rh = maxH;
-            rw = maxH * ratio;
-        }
+        if (ratio > maxW / maxH) { rw = maxW; rh = maxW / ratio; } else { rh = maxH; rw = maxH * ratio; }
         const rx = (300 - rw) / 2;
         const ry = (180 - rh) / 2 + 10;
 
-        if (wallRect) {
-            wallRect.setAttribute('x', rx);
-            wallRect.setAttribute('y', ry);
-            wallRect.setAttribute('width', rw);
-            wallRect.setAttribute('height', rh);
-        }
-        if (wallWidthLabel) {
-            wallWidthLabel.textContent = `${l.toFixed(1)} m`;
-            wallWidthLabel.setAttribute('x', rx + rw / 2);
-            wallWidthLabel.setAttribute('y', ry + rh + 18);
-        }
-        if (wallHeightLabel) {
-            wallHeightLabel.textContent = `${h.toFixed(1)} m`;
-            const hx = rx - 12;
-            const hy = ry + rh / 2;
-            wallHeightLabel.setAttribute('x', hx);
-            wallHeightLabel.setAttribute('y', hy);
-            wallHeightLabel.setAttribute('transform', `rotate(-90, ${hx}, ${hy})`);
-        }
-        if (wallAreaLabel) {
-            wallAreaLabel.textContent = `${area.toFixed(1)} m²`;
-            wallAreaLabel.setAttribute('x', rx + rw / 2);
-            wallAreaLabel.setAttribute('y', ry + rh / 2 + 6);
-        }
+        if (wallRect) { wallRect.setAttribute('x', rx); wallRect.setAttribute('y', ry); wallRect.setAttribute('width', rw); wallRect.setAttribute('height', rh); }
+        if (wallWidthLabel) { wallWidthLabel.textContent = `${l.toFixed(1)} m`; wallWidthLabel.setAttribute('x', rx + rw / 2); wallWidthLabel.setAttribute('y', ry + rh + 18); }
+        if (wallHeightLabel) { wallHeightLabel.textContent = `${h.toFixed(1)} m`; const hx = rx - 12; const hy = ry + rh / 2; wallHeightLabel.setAttribute('x', hx); wallHeightLabel.setAttribute('y', hy); wallHeightLabel.setAttribute('transform', `rotate(-90, ${hx}, ${hy})`); }
+        if (wallAreaLabel) { wallAreaLabel.textContent = `${area.toFixed(1)} m²`; wallAreaLabel.setAttribute('x', rx + rw / 2); wallAreaLabel.setAttribute('y', ry + rh / 2 + 6); }
 
-        // Update result cards
         if (calcArea) calcArea.textContent = area.toFixed(1);
         if (calcPaintArea) calcPaintArea.textContent = paintArea.toFixed(1);
         if (calcLiters) calcLiters.textContent = liters.toFixed(1);
-        if (calcCans) calcCans.textContent = cans;
+        if (calcCans) calcCans.textContent = combo.cans;
+
+        if (calcRecommendation) {
+            const sisa = Math.max(0, combo.total - liters).toFixed(1);
+            let html = combo.items.map(i => `<strong>${i.count}x ${i.liter}L</strong>`).join(' + ');
+            html += ` · Total: ${combo.total}L · Sisa: ~${sisa}L`;
+            calcRecommendation.innerHTML = html;
+        }
     };
 
     fLength?.addEventListener('input', updateCalcViz);

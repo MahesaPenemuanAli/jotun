@@ -28,17 +28,43 @@
 
                     <div class="admin-field">
                         <label for="kategori">Kategori</label>
-                        <input id="kategori" name="kategori" type="text" value="{{ old('kategori') }}" required placeholder="Contoh: Eksterior, Interior, Primer">
+                        <select id="kategori" name="kategori" required>
+                            <option value="Interior" @selected(old('kategori') === 'Interior')>Interior</option>
+                            <option value="Eksterior" @selected(old('kategori') === 'Eksterior')>Eksterior</option>
+                            <option value="Kayu & Besi" @selected(old('kategori') === 'Kayu & Besi')>Kayu & Besi</option>
+                        </select>
                     </div>
 
                     <div class="admin-field">
-                        <label for="harga">Harga (Rp)</label>
+                        <label for="tipe_produk">Tipe Produk</label>
+                        <select id="tipe_produk" name="tipe_produk">
+                            <option value="finishing" @selected(old('tipe_produk') === 'finishing')>Finishing (Cat Akhir)</option>
+                            <option value="primer" @selected(old('tipe_produk') === 'primer')>Primer (Cat Dasar)</option>
+                            <option value="waterproofing" @selected(old('tipe_produk') === 'waterproofing')>Waterproofing</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-field">
+                        <label for="status_produk">Status Produk</label>
+                        <select id="status_produk" name="status_produk" required>
+                            <option value="aktif" @selected(old('status_produk', 'aktif') === 'aktif')>Aktif</option>
+                            <option value="nonaktif" @selected(old('status_produk') === 'nonaktif')>Nonaktif</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-field">
+                        <label for="harga">Harga (Rp) — Ukuran 2.5L</label>
                         <input id="harga" name="harga" type="number" min="0" value="{{ old('harga', 0) }}" required>
                     </div>
 
                     <div class="admin-field">
                         <label for="daya_sebar">Daya Sebar (m²/liter)</label>
                         <input id="daya_sebar" name="daya_sebar" type="number" min="0" step="0.01" value="{{ old('daya_sebar') }}" placeholder="Contoh: 12.00">
+                    </div>
+
+                    <div class="admin-field full-width" style="display:flex;align-items:center;gap:10px;padding:12px 0">
+                        <input type="checkbox" id="is_tintable" name="is_tintable" value="1" @checked(old('is_tintable')) style="width:18px;height:18px">
+                        <label for="is_tintable" style="margin:0;cursor:pointer">Produk ini bisa dilakukan tinting warna</label>
                     </div>
 
                     <div class="admin-field full-width">

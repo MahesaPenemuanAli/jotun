@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\KatalogProduk;
 use App\Models\Pelanggan;
+use App\Models\ProdukUkuran;
 use App\Models\RiwayatKalkulasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,8 @@ class PaintCalculatorController extends Controller
     public function create(): View
     {
         $products = KatalogProduk::query()
+            ->aktif()
+            ->with('ukuranAktif')
             ->orderBy('kategori')
             ->orderBy('nama_produk')
             ->get();
@@ -49,7 +52,9 @@ class PaintCalculatorController extends Controller
         $wallArea = (float) $validated['panjang_dinding'] * (float) $validated['tinggi_dinding'];
         $paintArea = $wallArea * (int) $validated['jumlah_lapisan'];
         $liters = round($paintArea / $spreadRate, 2);
-        $cans = max(1, (int) ceil($liters / 2.5));
+
+        // Smart can combination
+        $recommendation = $this->calculateCanCombination($product, $liters);
 
         if ($isLoggedIn) {
             $customer = $user->pelanggan;
@@ -72,6 +77,8 @@ class PaintCalculatorController extends Controller
             ]);
         }
 
+        $cans = $recommendation['total_kaleng'] ?: max(1, (int) ceil($liters / 2.5));
+
         RiwayatKalkulasi::create([
             'id_pelanggan' => $customer->id_pelanggan,
             'id_produk' => $product->id_produk,
@@ -89,10 +96,116 @@ class PaintCalculatorController extends Controller
             ->with('success', 'Kalkulasi berhasil disimpan ke riwayat.')
             ->with('calculator_result', [
                 'produk' => $product->nama_produk,
+                'kategori' => $product->kategori,
+                'tipe' => $product->tipe_produk,
+                'daya_sebar' => $spreadRate,
                 'luas_dinding' => number_format($wallArea, 2, ',', '.'),
                 'jumlah_lapisan' => $validated['jumlah_lapisan'],
+                'total_area' => number_format($paintArea, 2, ',', '.'),
                 'hasil_liter' => number_format($liters, 2, ',', '.'),
+                'hasil_liter_raw' => $liters,
                 'jumlah_kaleng' => $cans,
+                'rekomendasi' => $recommendation['items'],
+                'total_liter_beli' => $recommendation['total_liter'],
+                'sisa_liter' => $recommendation['sisa'],
+                'estimasi_harga' => $recommendation['estimasi_harga'],
             ]);
+    }
+
+    /**
+     * Calculate optimal can combination for required liters.
+     */
+    private function calculateCanCombination(KatalogProduk $product, float $requiredLiters): array
+    {
+        $sizes = ProdukUkuran::query()
+            ->where('id_produk', $product->id_produk)
+            ->where('status', 'aktif')
+            ->orderByDesc('ukuran_liter')
+            ->get();
+
+        // Fallback if no sizes defined
+        if ($sizes->isEmpty()) {
+            $cans = max(1, (int) ceil($requiredLiters / 2.5));
+            return [
+                'items' => [['ukuran' => 2.5, 'jumlah' => $cans, 'harga' => null]],
+                'total_kaleng' => $cans,
+                'total_liter' => $cans * 2.5,
+                'sisa' => round($cans * 2.5 - $requiredLiters, 2),
+                'estimasi_harga' => null,
+            ];
+        }
+
+        // Greedy algorithm: largest cans first
+        $remaining = $requiredLiters;
+        $items = [];
+        $totalLiter = 0;
+        $totalHarga = 0;
+        $totalKaleng = 0;
+        $hasPrice = true;
+
+        foreach ($sizes as $size) {
+            $liter = (float) $size->ukuran_liter;
+            if ($liter <= 0) continue;
+
+            $count = (int) floor($remaining / $liter);
+            if ($count > 0) {
+                $items[] = [
+                    'ukuran' => $liter,
+                    'jumlah' => $count,
+                    'harga' => $size->harga,
+                ];
+                $remaining -= $count * $liter;
+                $totalLiter += $count * $liter;
+                $totalKaleng += $count;
+                if ($size->harga) {
+                    $totalHarga += $count * $size->harga;
+                } else {
+                    $hasPrice = false;
+                }
+            }
+        }
+
+        // If remaining > 0, add smallest can that covers it
+        if ($remaining > 0.01) {
+            $smallestFit = $sizes->sortBy('ukuran_liter')
+                ->first(fn ($s) => (float) $s->ukuran_liter >= $remaining);
+
+            if (! $smallestFit) {
+                $smallestFit = $sizes->sortByDesc('ukuran_liter')->last();
+            }
+
+            if ($smallestFit) {
+                $existingIdx = collect($items)->search(
+                    fn ($item) => $item['ukuran'] == (float) $smallestFit->ukuran_liter
+                );
+                if ($existingIdx !== false) {
+                    $items[$existingIdx]['jumlah']++;
+                } else {
+                    $items[] = [
+                        'ukuran' => (float) $smallestFit->ukuran_liter,
+                        'jumlah' => 1,
+                        'harga' => $smallestFit->harga,
+                    ];
+                }
+                $totalLiter += (float) $smallestFit->ukuran_liter;
+                $totalKaleng++;
+                if ($smallestFit->harga) {
+                    $totalHarga += $smallestFit->harga;
+                } else {
+                    $hasPrice = false;
+                }
+            }
+        }
+
+        // Sort items by size descending for display
+        usort($items, fn ($a, $b) => $b['ukuran'] <=> $a['ukuran']);
+
+        return [
+            'items' => $items,
+            'total_kaleng' => $totalKaleng,
+            'total_liter' => round($totalLiter, 1),
+            'sisa' => round(max(0, $totalLiter - $requiredLiters), 2),
+            'estimasi_harga' => $hasPrice ? $totalHarga : null,
+        ];
     }
 }

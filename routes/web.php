@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLaporanController;
+use App\Http\Controllers\Admin\AdminMaintenanceController;
 use App\Http\Controllers\Admin\AdminProdukController;
 use App\Http\Controllers\Admin\AdminProfilTokoController;
 use App\Http\Controllers\Admin\AdminTintingController;
@@ -14,26 +15,6 @@ use App\Http\Controllers\Pelanggan\RiwayatController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\TintingRequestController;
 use Illuminate\Support\Facades\Route;
-
-// ─── Utility: Seed via browser (Herd-compatible) ────────────────
-Route::get("/seed", function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call("db:seed");
-        return response("Database Jotun sukses di-seed! <a href='" . route('home') . "'>Kembali ke Beranda</a>");
-    } catch (\Exception $e) {
-        return response("Gagal: " . $e->getMessage());
-    }
-});
-
-// ─── Utility: Migrate via browser (Herd-compatible) ─────────────
-Route::get("/migrate", function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call("migrate", ['--force' => true]);
-        return response("Migration berhasil! <a href='" . route('home') . "'>Kembali ke Beranda</a>");
-    } catch (\Exception $e) {
-        return response("Gagal: " . $e->getMessage());
-    }
-});
 
 // ─── Public Routes ───────────────────────────────────────────────
 
@@ -106,4 +87,9 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     Route::get('laporan', [AdminLaporanController::class, 'index'])->name('admin.laporan.index');
     Route::get('laporan/export-csv', [AdminLaporanController::class, 'exportCsv'])->name('admin.laporan.exportCsv');
+
+    // ─── Maintenance (secured) ──────────────────────────────────
+    Route::get('maintenance', [AdminMaintenanceController::class, 'index'])->name('admin.maintenance');
+    Route::post('maintenance/migrate', [AdminMaintenanceController::class, 'runMigrate'])->name('admin.maintenance.migrate');
+    Route::post('maintenance/seed', [AdminMaintenanceController::class, 'runSeed'])->name('admin.maintenance.seed');
 });

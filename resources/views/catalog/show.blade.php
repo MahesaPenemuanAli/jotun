@@ -15,14 +15,21 @@
             </div>
 
             <div class="detail-content">
-                <span class="detail-category">{{ $product->kategori }}</span>
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                    <span class="detail-category">{{ $product->kategori }}</span>
+                    @if ($product->is_tintable)
+                        <span class="detail-category" style="background:var(--jotun-yellow-soft);color:var(--jotun-yellow-hover);">Bisa Tinting</span>
+                    @else
+                        <span class="detail-category" style="background:#f1f5f9;color:#64748b;">{{ ucfirst($product->tipe_produk ?? 'Pendukung') }}</span>
+                    @endif
+                </div>
                 <h1>{{ $product->nama_produk }}</h1>
                 <p style="color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; line-height: 1.7;">
                     Varian produk cat orisinal berkualitas tinggi dari Jotun. Dirancang khusus untuk memberikan hasil akhir yang indah, daya tahan maksimal, dan perlindungan optimal bagi dinding properti Anda.
                 </p>
 
                 <div class="detail-price-box">
-                    <span class="price-label">Harga Eceran Resmi Cabang</span>
+                    <span class="price-label">Harga Eceran Resmi Cabang (2.5L)</span>
                     <strong class="price-value">Rp{{ number_format($product->harga, 0, ',', '.') }}</strong>
                 </div>
 
@@ -35,10 +42,20 @@
                         <span>Estimasi Daya Sebar</span>
                         <strong>{{ $product->daya_sebar ?? '10' }} m² / Liter</strong>
                     </div>
+                    <div class="spec-item">
+                        <span>Tipe Produk</span>
+                        <strong>{{ ucfirst($product->tipe_produk ?? 'Finishing') }}</strong>
+                    </div>
                 </div>
 
                 <div class="hero-actions" style="margin-top: 16px;">
-                    <a class="btn btn-primary" href="{{ route('tinting.create') }}">Campur Warna (Tinting)</a>
+                    @if ($product->is_tintable)
+                        <a class="btn btn-primary" href="{{ route('tinting.create') }}">Campur Warna (Tinting)</a>
+                    @else
+                        <span style="font-size: 0.9rem; color: var(--muted); font-style: italic; padding: 12px 0;">
+                            Produk pendukung — tidak tersedia untuk request tinting warna.
+                        </span>
+                    @endif
                     <a class="btn btn-secondary" href="{{ route('catalog.index') }}">Kembali Ke Katalog</a>
                 </div>
             </div>
@@ -46,6 +63,7 @@
     </section>
 
     <!-- Colors Section -->
+    @if ($product->is_tintable)
     <section class="section alt-bg">
         <div class="container">
             <div class="section-heading">
@@ -63,7 +81,7 @@
                 <div class="color-chips-grid">
                     @foreach ($product->warna as $color)
                         <article class="color-chip-card">
-                            <span class="color-chip-preview" data-color="{{ $color->hex_color ?: '#FDB913' }}" style="background-color: {{ $color->hex_color ?: '#FDB913' }}"></span>
+                            <span class="color-chip-preview" style="background-color: {{ $color->hex_color ?: '#FDB913' }}"></span>
                             <div>
                                 <h4>{{ $color->nama_warna }}</h4>
                                 <p>{{ $color->kode_warna ?: 'JTN-Custom' }}</p>
@@ -74,4 +92,5 @@
             @endif
         </div>
     </section>
+    @endif
 </x-layouts.public>
