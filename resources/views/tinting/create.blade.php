@@ -66,17 +66,41 @@
                     <!-- Step 2: Pilih Warna Dasar -->
                     <div class="studio-step">
                         <h3><span class="step-number">2</span> Pilih Warna Dasar Cat</h3>
-                        <div class="studio-color-grid">
+                        
+                        <!-- Search & Filter Controls -->
+                        <div class="color-picker-controls" style="margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
+                            <div class="field" style="margin:0">
+                                <input type="text" id="colorSearch" placeholder="Cari nama atau kode warna..." style="width:100%; min-height:42px; padding:10px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); font-size:0.9rem; background:var(--surface); color:var(--ink);">
+                            </div>
+                            
+                            <div class="color-category-filters" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+                                <button type="button" class="filter-pill active" data-filter="all">Semua</button>
+                                <button type="button" class="filter-pill" data-filter="Putih">Putih</button>
+                                <button type="button" class="filter-pill" data-filter="Abu-abu">Abu-abu</button>
+                                <button type="button" class="filter-pill" data-filter="Biru">Biru</button>
+                                <button type="button" class="filter-pill" data-filter="Hijau">Hijau</button>
+                                <button type="button" class="filter-pill" data-filter="Kuning">Kuning</button>
+                                <button type="button" class="filter-pill" data-filter="Merah">Merah</button>
+                                <button type="button" class="filter-pill" data-filter="Coklat">Coklat</button>
+                                <button type="button" class="filter-pill" data-filter="Netral">Netral</button>
+                                <button type="button" class="filter-pill" data-filter="Pastel">Pastel</button>
+                                <button type="button" class="filter-pill" data-filter="Gelap">Gelap</button>
+                            </div>
+                        </div>
+
+                        <!-- Compact Color Grid -->
+                        <div class="studio-color-grid" style="max-height:240px; overflow-y:auto; display:grid; grid-template-columns:repeat(8, 1fr); gap:12px; padding:12px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--surface);">
                             @forelse ($products as $product)
                                 @foreach ($product->warna as $color)
                                     <div class="studio-color-chip" 
-                                         style="background-color: {{ $color->hex_color ?: '#FDB913' }}"
+                                         style="background-color: {{ $color->hex_color ?: '#FDB913' }}; aspect-ratio:1; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); cursor:pointer; position:relative;"
                                          title="{{ $color->nama_warna }} ({{ $color->kode_warna }})"
                                          data-color-chip-id="{{ $color->id_warna }}"
                                          data-color-chip-product="{{ $product->id_produk }}"
                                          data-color-chip-hex="{{ $color->hex_color ?: '#FDB913' }}"
                                          data-color-chip-name="{{ $color->nama_warna }}"
-                                         data-color-chip-code="{{ $color->kode_warna }}">
+                                         data-color-chip-code="{{ $color->kode_warna }}"
+                                         data-color-chip-category="{{ $color->kategori_warna ?? 'Netral' }}">
                                     </div>
                                 @endforeach
                             @empty
@@ -84,6 +108,16 @@
                                     Pilihan warna belum tersedia
                                 </div>
                             @endforelse
+                        </div>
+
+                        <!-- Premium Selected Color Preview Card -->
+                        <div class="selected-color-preview-card" style="margin-top:16px; padding:14px 18px; display:flex; align-items:center; gap:16px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--bg-light); transition: var(--transition);">
+                            <div id="previewColorSwatch" style="width:48px; height:48px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 3px 10px rgba(0,0,0,0.08); flex-shrink:0; background-color:#F8F5EC; transition: background-color 0.2s ease;"></div>
+                            <div style="flex-grow: 1;">
+                                <span style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--jotun-yellow-hover); display:block; letter-spacing:0.05em;" id="previewColorCategory">NETRAL</span>
+                                <strong style="font-size:1.05rem; color:var(--obsidian); display:block; line-height:1.2; margin-top:2px;" id="previewColorName">Classic White</strong>
+                                <code style="font-size:0.8rem; color:var(--muted); font-family:monospace; margin-top:2px; display:inline-block;" id="previewColorCode">JTN-1624</code>
+                            </div>
                         </div>
                     </div>
 

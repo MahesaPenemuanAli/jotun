@@ -11,16 +11,30 @@
                 <div class="admin-search">
                     <input type="text" name="q" value="{{ $search }}" placeholder="Cari warna atau kode...">
                 </div>
-                <div class="admin-filter">
+                <div class="admin-filter" style="display:flex;gap:10px;">
                     <select name="produk" onchange="this.form.submit()">
                         <option value="">Semua Produk</option>
                         @foreach ($products as $prod)
-                            <option value="{{ $prod->id_produk }}" {{ $produkId === $prod->id_produk ? 'selected' : '' }}>{{ $prod->nama_produk }}</option>
+                            <option value="{{ $prod->id_produk }}" {{ $produkId == $prod->id_produk ? 'selected' : '' }}>{{ $prod->nama_produk }}</option>
                         @endforeach
                     </select>
+
+                    <select name="kategori_warna" onchange="this.form.submit()">
+                        <option value="">Semua Kategori</option>
+                        <option value="Putih" {{ $kategoriWarna === 'Putih' ? 'selected' : '' }}>Putih</option>
+                        <option value="Abu-abu" {{ $kategoriWarna === 'Abu-abu' ? 'selected' : '' }}>Abu-abu</option>
+                        <option value="Biru" {{ $kategoriWarna === 'Biru' ? 'selected' : '' }}>Biru</option>
+                        <option value="Hijau" {{ $kategoriWarna === 'Hijau' ? 'selected' : '' }}>Hijau</option>
+                        <option value="Kuning" {{ $kategoriWarna === 'Kuning' ? 'selected' : '' }}>Kuning</option>
+                        <option value="Merah" {{ $kategoriWarna === 'Merah' ? 'selected' : '' }}>Merah</option>
+                        <option value="Coklat" {{ $kategoriWarna === 'Coklat' ? 'selected' : '' }}>Coklat</option>
+                        <option value="Netral" {{ $kategoriWarna === 'Netral' ? 'selected' : '' }}>Netral</option>
+                        <option value="Pastel" {{ $kategoriWarna === 'Pastel' ? 'selected' : '' }}>Pastel</option>
+                        <option value="Gelap" {{ $kategoriWarna === 'Gelap' ? 'selected' : '' }}>Gelap</option>
+                    </select>
                 </div>
-                <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm">Cari</button>
-                @if ($search || $produkId)
+                <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm">Filter</button>
+                @if ($search || $produkId || $kategoriWarna)
                     <a href="{{ route('admin.warna.index') }}" class="admin-btn admin-btn-outline admin-btn-sm">Reset</a>
                 @endif
             </form>
@@ -33,6 +47,7 @@
                             <th>Warna</th>
                             <th>Nama</th>
                             <th>Kode</th>
+                            <th>Kategori</th>
                             <th>Produk</th>
                             <th>Gambar</th>
                             <th>Aksi</th>
@@ -49,6 +64,7 @@
                                 </td>
                                 <td><strong>{{ $color->nama_warna }}</strong></td>
                                 <td>{{ $color->kode_warna ?? '-' }}</td>
+                                <td><span class="badge badge-diproses" style="background:var(--admin-yellow-soft);color:var(--admin-ink)">{{ $color->kategori_warna ?? '-' }}</span></td>
                                 <td>{{ $color->produk->nama_produk ?? '-' }}</td>
                                 <td>
                                     @if ($color->gambar)

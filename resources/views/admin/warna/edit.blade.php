@@ -48,6 +48,23 @@
                         </div>
                     </div>
 
+                    <div class="admin-field">
+                        <label for="kategori_warna">Kategori Warna</label>
+                        <select id="kategori_warna" name="kategori_warna" required>
+                            <option value="">Pilih kategori...</option>
+                            <option value="Putih" {{ old('kategori_warna', $color->kategori_warna) === 'Putih' ? 'selected' : '' }}>Putih</option>
+                            <option value="Abu-abu" {{ old('kategori_warna', $color->kategori_warna) === 'Abu-abu' ? 'selected' : '' }}>Abu-abu</option>
+                            <option value="Biru" {{ old('kategori_warna', $color->kategori_warna) === 'Biru' ? 'selected' : '' }}>Biru</option>
+                            <option value="Hijau" {{ old('kategori_warna', $color->kategori_warna) === 'Hijau' ? 'selected' : '' }}>Hijau</option>
+                            <option value="Kuning" {{ old('kategori_warna', $color->kategori_warna) === 'Kuning' ? 'selected' : '' }}>Kuning</option>
+                            <option value="Merah" {{ old('kategori_warna', $color->kategori_warna) === 'Merah' ? 'selected' : '' }}>Merah</option>
+                            <option value="Coklat" {{ old('kategori_warna', $color->kategori_warna) === 'Coklat' ? 'selected' : '' }}>Coklat</option>
+                            <option value="Netral" {{ old('kategori_warna', $color->kategori_warna) === 'Netral' ? 'selected' : '' }}>Netral</option>
+                            <option value="Pastel" {{ old('kategori_warna', $color->kategori_warna) === 'Pastel' ? 'selected' : '' }}>Pastel</option>
+                            <option value="Gelap" {{ old('kategori_warna', $color->kategori_warna) === 'Gelap' ? 'selected' : '' }}>Gelap</option>
+                        </select>
+                    </div>
+
                     <div class="admin-field full-width">
                         <label>Gambar Warna</label>
 

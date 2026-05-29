@@ -254,6 +254,48 @@ if (studioForm) {
         }
     };
 
+    let currentSearch = "";
+    let currentCategory = "all";
+
+    const applyColorFilters = () => {
+        let firstVisibleChip = null;
+
+        colorChips.forEach((chip) => {
+            const chipProduct = chip.dataset.colorChipProduct;
+            const chipName = (chip.dataset.colorChipName || "").toLowerCase();
+            const chipCode = (chip.dataset.colorChipCode || "").toLowerCase();
+            const chipCategory = chip.dataset.colorChipCategory || "";
+
+            const matchesProduct = chipProduct === state.selectedProductId;
+            const matchesSearch = currentSearch === "" || 
+                chipName.includes(currentSearch) || 
+                chipCode.includes(currentSearch);
+            const matchesCategory = currentCategory === "all" || 
+                chipCategory === currentCategory;
+
+            if (matchesProduct && matchesSearch && matchesCategory) {
+                chip.style.display = "block";
+                chip.classList.remove("hidden");
+                if (!firstVisibleChip) {
+                    firstVisibleChip = chip;
+                }
+            } else {
+                chip.style.display = "none";
+                chip.classList.add("hidden");
+            }
+        });
+
+        // Automatically select the first visible color if the current selection is no longer visible
+        if (firstVisibleChip) {
+            const currentSelectedVisible = Array.from(colorChips).find(chip => 
+                chip.dataset.colorChipId === state.selectedColorId && !chip.classList.contains("hidden")
+            );
+            if (!currentSelectedVisible) {
+                firstVisibleChip.click();
+            }
+        }
+    };
+
     // Product Selection handler
     const selectProduct = (productId, price) => {
         state.selectedProductId = productId;
@@ -273,30 +315,14 @@ if (studioForm) {
             }
         });
 
-        // Filter color chips based on product relation
-        let firstVisibleChip = null;
-        colorChips.forEach((chip) => {
-            const chipProduct = chip.dataset.colorChipProduct;
-            if (chipProduct === productId) {
-                chip.classList.remove("hidden");
-                if (!firstVisibleChip) {
-                    firstVisibleChip = chip;
-                }
-            } else {
-                chip.classList.add("hidden");
-            }
-        });
-
-        // Automatically trigger click on the first color chip of this product
-        if (firstVisibleChip) {
-            firstVisibleChip.click();
-        }
+        // Apply filters!
+        applyColorFilters();
 
         updatePriceEstimate();
     };
 
     // Color Chip Selection handler
-    const selectColor = (chipId, hex, name, code) => {
+    const selectColor = (chipId, hex, name, code, category) => {
         state.selectedColorId = chipId;
         state.selectedColorHex = hex;
         state.selectedColorName = name;
@@ -310,11 +336,22 @@ if (studioForm) {
         // Toggle chip active state
         colorChips.forEach((chip) => {
             if (chip.dataset.colorChipId === chipId) {
-                cardBorder = chip.classList.add("active");
+                chip.classList.add("active");
             } else {
                 chip.classList.remove("active");
             }
         });
+
+        // Update the selected color preview card!
+        const previewSwatch = studioForm.querySelector("#previewColorSwatch");
+        const previewCategory = studioForm.querySelector("#previewColorCategory");
+        const previewName = studioForm.querySelector("#previewColorName");
+        const previewCode = studioForm.querySelector("#previewColorCode");
+        
+        if (previewSwatch) previewSwatch.style.backgroundColor = hex;
+        if (previewCategory) previewCategory.textContent = (category || "NETRAL").toUpperCase();
+        if (previewName) previewName.textContent = name;
+        if (previewCode) previewCode.textContent = code;
 
         updateCanvasColor();
         updatePigmentFormula();
@@ -336,8 +373,29 @@ if (studioForm) {
                 chip.dataset.colorChipId,
                 chip.dataset.colorChipHex,
                 chip.dataset.colorChipName,
-                chip.dataset.colorChipCode
+                chip.dataset.colorChipCode,
+                chip.dataset.colorChipCategory
             );
+        });
+    });
+
+    // Search input listener
+    const searchInput = studioForm.querySelector("#colorSearch");
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            currentSearch = e.target.value.toLowerCase().trim();
+            applyColorFilters();
+        });
+    }
+
+    // Filter pill click listener
+    const filterPills = studioForm.querySelectorAll(".filter-pill");
+    filterPills.forEach((pill) => {
+        pill.addEventListener("click", () => {
+            filterPills.forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+            currentCategory = pill.dataset.filter;
+            applyColorFilters();
         });
     });
 

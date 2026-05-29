@@ -16,6 +16,7 @@ class AdminWarnaController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
         $produkId = $request->query('produk');
+        $kategoriWarna = $request->query('kategori_warna');
 
         $colors = Warna::query()
             ->with('produk')
@@ -28,8 +29,11 @@ class AdminWarnaController extends Controller
             ->when(filled($produkId), function ($query) use ($produkId): void {
                 $query->where('id_produk', $produkId);
             })
+            ->when(filled($kategoriWarna), function ($query) use ($kategoriWarna): void {
+                $query->where('kategori_warna', $kategoriWarna);
+            })
             ->orderBy('nama_warna')
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString();
 
         $products = KatalogProduk::orderBy('nama_produk')->get();
@@ -39,6 +43,7 @@ class AdminWarnaController extends Controller
             'products' => $products,
             'search' => $search,
             'produkId' => $produkId,
+            'kategoriWarna' => $kategoriWarna,
         ]);
     }
 
@@ -59,6 +64,7 @@ class AdminWarnaController extends Controller
             'nama_warna' => ['required', 'string', 'max:255'],
             'kode_warna' => ['nullable', 'string', 'max:255'],
             'hex_color' => ['nullable', 'string', 'max:20'],
+            'kategori_warna' => ['required', 'string', 'max:50'],
             'gambar_mode' => ['nullable', 'string', 'in:url,upload'],
             'gambar_url' => ['nullable', 'url', 'max:2048'],
             'gambar_file' => ['nullable', 'image', 'max:2048'],
@@ -71,6 +77,7 @@ class AdminWarnaController extends Controller
             'nama_warna' => $validated['nama_warna'],
             'kode_warna' => $validated['kode_warna'] ?? null,
             'hex_color' => $validated['hex_color'] ?? null,
+            'kategori_warna' => $validated['kategori_warna'],
             'gambar' => $gambar,
         ]);
 
@@ -99,6 +106,7 @@ class AdminWarnaController extends Controller
             'nama_warna' => ['required', 'string', 'max:255'],
             'kode_warna' => ['nullable', 'string', 'max:255'],
             'hex_color' => ['nullable', 'string', 'max:20'],
+            'kategori_warna' => ['required', 'string', 'max:50'],
             'gambar_mode' => ['nullable', 'string', 'in:url,upload'],
             'gambar_url' => ['nullable', 'url', 'max:2048'],
             'gambar_file' => ['nullable', 'image', 'max:2048'],
@@ -111,6 +119,7 @@ class AdminWarnaController extends Controller
             'nama_warna' => $validated['nama_warna'],
             'kode_warna' => $validated['kode_warna'] ?? null,
             'hex_color' => $validated['hex_color'] ?? null,
+            'kategori_warna' => $validated['kategori_warna'],
             'gambar' => $gambar,
         ]);
 
