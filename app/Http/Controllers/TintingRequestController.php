@@ -22,7 +22,7 @@ class TintingRequestController extends Controller
             ->tintable()
             ->with([
                 "warna" => function ($query): void {
-                    $query->orderBy("nama_warna");
+                    $query->orderBy("kategori_warna")->orderBy("nama_warna");
                 },
             ])
             ->orderBy("kategori")

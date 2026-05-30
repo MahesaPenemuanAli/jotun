@@ -138,8 +138,8 @@ const studioForm = document.querySelector("[data-tinting-studio-form]");
 if (studioForm) {
     const productCards = studioForm.querySelectorAll("[data-product-card-id]");
     const colorChips = studioForm.querySelectorAll("[data-color-chip-id]");
-    const hiddenProductSelect = studioForm.querySelector("#id_produk");
-    const hiddenColorSelect = studioForm.querySelector("#id_warna");
+    const hiddenProductInput = studioForm.querySelector("#selectedProductInput");
+    const hiddenColorInput = studioForm.querySelector("#selectedColorInput");
 
     const sliderLightness = studioForm.querySelector("#sliderLightness");
     const sliderWarmth = studioForm.querySelector("#sliderWarmth");
@@ -160,28 +160,30 @@ if (studioForm) {
     const barTintB = studioForm.querySelector("#formulaTintB");
     const barTintBText = studioForm.querySelector("#formulaTintBText");
 
+    const colorCountInfo = document.getElementById("colorCountInfo");
+    const colorNoResults = document.getElementById("colorNoResults");
+    const colorGridContainer = document.getElementById("colorGridContainer");
+    const colorSelectPrompt = document.getElementById("colorSelectPrompt");
+
     let state = {
         selectedProductId: "",
         selectedProductPrice: 0,
         selectedColorId: "",
-        selectedColorHex: "#F8F5EC",
-        selectedColorName: "Classic White",
-        selectedColorCode: "JTN-001",
-        lightness: 100, // percentage (40 to 160)
-        warmth: 0 // offset (-30 to 30)
+        selectedColorHex: "#E5E7EB",
+        selectedColorName: "",
+        selectedColorCode: "",
+        lightness: 100,
+        warmth: 0
     };
 
-    // Color conversion utility: HEX to HSL
     const hexToHsl = (hex) => {
         let r = parseInt(hex.slice(1, 3), 16) / 255;
         let g = parseInt(hex.slice(3, 5), 16) / 255;
         let b = parseInt(hex.slice(5, 7), 16) / 255;
         let max = Math.max(r, g, b), min = Math.min(r, g, b);
         let h, s, l = (max + min) / 2;
-
-        if (max === min) {
-            h = s = 0; // achromatic
-        } else {
+        if (max === min) { h = s = 0; }
+        else {
             let d = max - min;
             s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
             switch (max) {
@@ -194,176 +196,118 @@ if (studioForm) {
         return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
     };
 
-    // Update Room Visualizer Canvas Color
     const updateCanvasColor = () => {
+        if (!state.selectedColorHex || state.selectedColorHex === "#E5E7EB") return;
         const baseHsl = hexToHsl(state.selectedColorHex);
-        
-        // 1. Process Lightness manipulation
         let targetL = Math.max(10, Math.min(95, baseHsl.l * (state.lightness / 100)));
-        
-        // 2. Process Warmth manipulation (shift Hue slightly towards yellow/warm: ~35 deg or cool: ~210 deg)
         let targetH = baseHsl.h;
         let targetS = baseHsl.s;
-
         if (state.warmth > 0) {
-            // Shift towards warm yellow (approx 45 degrees)
-            const diff = 45 - targetH;
-            targetH = targetH + (diff * (state.warmth / 60));
+            targetH = targetH + ((45 - targetH) * (state.warmth / 60));
             targetS = Math.min(100, targetS + (state.warmth * 0.3));
         } else if (state.warmth < 0) {
-            // Shift towards cool blue (approx 210 degrees)
-            const diff = 210 - targetH;
-            targetH = targetH + (diff * (Math.abs(state.warmth) / 60));
+            targetH = targetH + ((210 - targetH) * (Math.abs(state.warmth) / 60));
             targetS = Math.min(100, targetS + (Math.abs(state.warmth) * 0.15));
         }
-
-        // Apply updated HSL background to canvas container
-        if (roomCanvas) {
-            roomCanvas.style.backgroundColor = `hsl(${Math.round(targetH)}, ${Math.round(targetS)}%, ${Math.round(targetL)}%)`;
-        }
-
-        // Update badge caption
+        if (roomCanvas) roomCanvas.style.backgroundColor = `hsl(${Math.round(targetH)}, ${Math.round(targetS)}%, ${Math.round(targetL)}%)`;
         if (activeColorBadge) {
             let label = `${state.selectedColorName} (${state.selectedColorCode})`;
-            if (state.lightness !== 100 || state.warmth !== 0) {
-                label += " - Racikan Kustom";
-            }
+            if (state.lightness !== 100 || state.warmth !== 0) label += " - Racikan Kustom";
             activeColorBadge.textContent = label;
         }
     };
 
-    // Calculate Pigment Composition Bars
     const updatePigmentFormula = () => {
-        // Mock a realistic chemical dispenser logic based on sliders
         let warmthOffset = Math.abs(state.warmth);
         let lightnessOffset = Math.abs(state.lightness - 100);
-
-        let basePct = Math.max(82, Math.min(99, 100 - (warmthOffset * 0.3) - (lightnessOffset * 0.15)));
-        let tintAPct = Math.max(1, Math.min(12, (state.warmth > 0 ? warmthOffset * 0.35 : 1) + (lightnessOffset * 0.05)));
+        let basePct = Math.round(Math.max(82, Math.min(99, 100 - (warmthOffset * 0.3) - (lightnessOffset * 0.15))));
+        let tintAPct = Math.round(Math.max(1, Math.min(12, (state.warmth > 0 ? warmthOffset * 0.35 : 1) + (lightnessOffset * 0.05))));
         let tintBPct = Math.round(100 - basePct - tintAPct);
-
-        basePct = Math.round(basePct);
-        tintAPct = Math.round(tintAPct);
-
-        if (barBase && barBaseText) {
-            barBase.style.width = `${basePct}%`;
-            barBaseText.textContent = `${basePct}%`;
-        }
-        if (barTintA && barTintAText) {
-            barTintA.style.width = `${tintAPct}%`;
-            barTintAText.textContent = `${tintAPct}%`;
-        }
-        if (barTintB && barTintBText) {
-            barTintB.style.width = `${tintBPct}%`;
-            barTintBText.textContent = `${tintBPct}%`;
-        }
+        if (barBase && barBaseText) { barBase.style.width = `${basePct}%`; barBaseText.textContent = `${basePct}%`; }
+        if (barTintA && barTintAText) { barTintA.style.width = `${tintAPct}%`; barTintAText.textContent = `${tintAPct}%`; }
+        if (barTintB && barTintBText) { barTintB.style.width = `${tintBPct}%`; barTintBText.textContent = `${tintBPct}%`; }
     };
 
-    // Calculate Price Estimate
     const updatePriceEstimate = () => {
         const qty = parseInt(canQtyInput?.value || "1");
-        const sizeMultiplier = canSizeSelect?.value === "20" ? 7.5 : 1.0; // 7.5x price instead of 8x for bulk discount
+        const sizeMultiplier = canSizeSelect?.value === "20" ? 7.5 : 1.0;
         const totalPrice = state.selectedProductPrice * sizeMultiplier * qty;
-
-        if (priceEstimateText) {
-            priceEstimateText.textContent = `Rp${totalPrice.toLocaleString("id-ID")}`;
-        }
+        if (priceEstimateText) priceEstimateText.textContent = `Rp${totalPrice.toLocaleString("id-ID")}`;
     };
 
     let currentSearch = "";
     let currentCategory = "all";
 
     const applyColorFilters = () => {
+        let visibleCount = 0;
         let firstVisibleChip = null;
 
         colorChips.forEach((chip) => {
             const chipProduct = chip.dataset.colorChipProduct;
             const chipName = (chip.dataset.colorChipName || "").toLowerCase();
             const chipCode = (chip.dataset.colorChipCode || "").toLowerCase();
-            const chipCategory = chip.dataset.colorChipCategory || "";
+            const chipCategory = (chip.dataset.colorChipCategory || "").trim().toLowerCase();
 
             const matchesProduct = chipProduct === state.selectedProductId;
-            const matchesSearch = currentSearch === "" || 
-                chipName.includes(currentSearch) || 
-                chipCode.includes(currentSearch);
-            const matchesCategory = currentCategory === "all" || 
-                chipCategory === currentCategory;
+            const matchesSearch = currentSearch === "" || chipName.includes(currentSearch) || chipCode.includes(currentSearch);
+            const matchesCategory = currentCategory === "all" || chipCategory === currentCategory.toLowerCase();
 
             if (matchesProduct && matchesSearch && matchesCategory) {
                 chip.style.display = "block";
                 chip.classList.remove("hidden");
-                if (!firstVisibleChip) {
-                    firstVisibleChip = chip;
-                }
+                visibleCount++;
+                if (!firstVisibleChip) firstVisibleChip = chip;
             } else {
                 chip.style.display = "none";
                 chip.classList.add("hidden");
             }
         });
 
-        // Automatically select the first visible color if the current selection is no longer visible
+        // Show/hide no-results and color count
+        if (colorNoResults) colorNoResults.style.display = (state.selectedProductId && visibleCount === 0) ? "block" : "none";
+        if (colorGridContainer) colorGridContainer.style.display = state.selectedProductId ? "grid" : "none";
+        if (colorSelectPrompt) colorSelectPrompt.style.display = state.selectedProductId ? "none" : "block";
+        if (colorCountInfo) colorCountInfo.textContent = state.selectedProductId ? `${visibleCount} warna tersedia` : "";
+
+        // Auto-select first visible if current is not visible
         if (firstVisibleChip) {
-            const currentSelectedVisible = Array.from(colorChips).find(chip => 
-                chip.dataset.colorChipId === state.selectedColorId && !chip.classList.contains("hidden")
-            );
-            if (!currentSelectedVisible) {
-                firstVisibleChip.click();
-            }
+            const currentStillVisible = Array.from(colorChips).find(c => c.dataset.colorChipId === state.selectedColorId && !c.classList.contains("hidden"));
+            if (!currentStillVisible) firstVisibleChip.click();
         }
     };
 
-    // Product Selection handler
     const selectProduct = (productId, price) => {
         state.selectedProductId = productId;
         state.selectedProductPrice = Number(price);
+        if (hiddenProductInput) hiddenProductInput.value = productId;
 
-        // Sync hidden select
-        if (hiddenProductSelect) {
-            hiddenProductSelect.value = productId;
-        }
+        // Reset color selection
+        state.selectedColorId = "";
+        if (hiddenColorInput) hiddenColorInput.value = "";
 
-        // Toggle card visual active states
         productCards.forEach((card) => {
-            if (card.dataset.productCardId === productId) {
-                card.classList.add("active");
-            } else {
-                card.classList.remove("active");
-            }
+            card.classList.toggle("active", card.dataset.productCardId === productId);
         });
 
-        // Apply filters!
         applyColorFilters();
-
         updatePriceEstimate();
     };
 
-    // Color Chip Selection handler
     const selectColor = (chipId, hex, name, code, category) => {
         state.selectedColorId = chipId;
         state.selectedColorHex = hex;
         state.selectedColorName = name;
         state.selectedColorCode = code;
+        if (hiddenColorInput) hiddenColorInput.value = chipId;
 
-        // Sync hidden select option
-        if (hiddenColorSelect) {
-            hiddenColorSelect.value = chipId;
-        }
-
-        // Toggle chip active state
         colorChips.forEach((chip) => {
-            if (chip.dataset.colorChipId === chipId) {
-                chip.classList.add("active");
-            } else {
-                chip.classList.remove("active");
-            }
+            chip.classList.toggle("active", chip.dataset.colorChipId === chipId);
         });
 
-        // Update the selected color preview card!
         const previewSwatch = studioForm.querySelector("#previewColorSwatch");
         const previewCategory = studioForm.querySelector("#previewColorCategory");
         const previewName = studioForm.querySelector("#previewColorName");
         const previewCode = studioForm.querySelector("#previewColorCode");
-        
         if (previewSwatch) previewSwatch.style.backgroundColor = hex;
         if (previewCategory) previewCategory.textContent = (category || "NETRAL").toUpperCase();
         if (previewName) previewName.textContent = name;
@@ -374,37 +318,19 @@ if (studioForm) {
     };
 
     // ─── ATTACH EVENTS ───
-
-    // Product cards click event
     productCards.forEach((card) => {
-        card.addEventListener("click", () => {
-            selectProduct(card.dataset.productCardId, card.dataset.productPrice);
-        });
+        card.addEventListener("click", () => selectProduct(card.dataset.productCardId, card.dataset.productPrice));
     });
 
-    // Color chips click event
     colorChips.forEach((chip) => {
-        chip.addEventListener("click", () => {
-            selectColor(
-                chip.dataset.colorChipId,
-                chip.dataset.colorChipHex,
-                chip.dataset.colorChipName,
-                chip.dataset.colorChipCode,
-                chip.dataset.colorChipCategory
-            );
-        });
+        chip.addEventListener("click", () => selectColor(chip.dataset.colorChipId, chip.dataset.colorChipHex, chip.dataset.colorChipName, chip.dataset.colorChipCode, chip.dataset.colorChipCategory));
     });
 
-    // Search input listener
     const searchInput = studioForm.querySelector("#colorSearch");
     if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            currentSearch = e.target.value.toLowerCase().trim();
-            applyColorFilters();
-        });
+        searchInput.addEventListener("input", (e) => { currentSearch = e.target.value.toLowerCase().trim(); applyColorFilters(); });
     }
 
-    // Filter pill click listener
     const filterPills = studioForm.querySelectorAll(".filter-pill");
     filterPills.forEach((pill) => {
         pill.addEventListener("click", () => {
@@ -415,37 +341,15 @@ if (studioForm) {
         });
     });
 
-    // Sliders input event listeners
-    sliderLightness?.addEventListener("input", (e) => {
-        state.lightness = Number(e.target.value);
-        if (lightnessValText) {
-            lightnessValText.textContent = `${state.lightness}%`;
-        }
-        updateCanvasColor();
-        updatePigmentFormula();
-    });
-
-    sliderWarmth?.addEventListener("input", (e) => {
-        state.warmth = Number(e.target.value);
-        if (warmthValText) {
-            if (state.warmth > 0) warmthValText.textContent = `+${state.warmth} Warm`;
-            else if (state.warmth < 0) warmthValText.textContent = `${state.warmth} Cool`;
-            else warmthValText.textContent = "Karakter Asli";
-        }
-        updateCanvasColor();
-        updatePigmentFormula();
-    });
-
-    // Quantity & Size event listeners
+    sliderLightness?.addEventListener("input", (e) => { state.lightness = Number(e.target.value); if (lightnessValText) lightnessValText.textContent = `${state.lightness}%`; updateCanvasColor(); updatePigmentFormula(); });
+    sliderWarmth?.addEventListener("input", (e) => { state.warmth = Number(e.target.value); if (warmthValText) { if (state.warmth > 0) warmthValText.textContent = `+${state.warmth} Warm`; else if (state.warmth < 0) warmthValText.textContent = `${state.warmth} Cool`; else warmthValText.textContent = "Karakter Asli"; } updateCanvasColor(); updatePigmentFormula(); });
     canQtyInput?.addEventListener("input", updatePriceEstimate);
     canSizeSelect?.addEventListener("change", updatePriceEstimate);
 
-    // Initialize with active card (first card by default)
+    // Initialize
     const initialActiveCard = studioForm.querySelector(".studio-product-card.active");
     if (initialActiveCard) {
-        selectProduct(
-            initialActiveCard.dataset.productCardId,
-            initialActiveCard.dataset.productPrice
-        );
+        selectProduct(initialActiveCard.dataset.productCardId, initialActiveCard.dataset.productPrice);
     }
 }
+

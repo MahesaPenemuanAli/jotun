@@ -1,11 +1,11 @@
-<x-layouts.public title="Jotun Color Studio | Pencampuran Warna Premium" description="Eksperimen dengan campuran warna cat Jotun di Color Studio interaktif. Pilih produk kustom Anda dan kirimkan langsung ke cabang Jotun Graha Metropolitan Deli Serdang.">
+<x-layouts.public title="Jotun Color Studio | Pencampuran Warna Premium" description="Eksperimen dengan campuran warna cat Jotun di Color Studio interaktif.">
     <!-- Header Hero -->
     <section class="hero" style="padding: 80px 0 48px; background-color: var(--surface); border-bottom: 1px solid var(--line);">
         <div class="container">
             <span class="eyebrow">Studio Pencampuran Warna</span>
             <h1 style="font-size: 2.8rem; margin-bottom: 16px;">Jotun Color Studio</h1>
             <p style="color: var(--muted); font-size: 1.1rem; max-width: 800px; margin-bottom: 0;">
-                Eksperimen secara visual dengan jutaan kombinasi warna cat premium kami. Pilih jenis cat, tentukan warna dasar, dan sesuaikan shade Anda. Formula kustom pigmen Anda akan otomatis terkirim ke mesin tinting komputer cabang **Graha Metropolitan Deli Serdang** agar pesanan siap saat Anda berkunjung ke toko kami.
+                Eksperimen secara visual dengan kombinasi warna cat premium kami. Pilih jenis cat, tentukan warna dasar, dan sesuaikan shade Anda. Formula kustom Anda akan dikirim ke mesin tinting cabang <strong>Graha Metropolitan Deli Serdang</strong>.
             </p>
         </div>
     </section>
@@ -13,16 +13,22 @@
     <!-- Interactive Workspace Section -->
     <section class="section alt-bg" style="padding: 56px 0;">
         <div class="container">
+            {{-- Debug info --}}
+            @if(config('app.debug'))
+                <div style="background:#fef3c7;border:1px solid #f59e0b;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:0.8rem;color:#92400e;">
+                    <strong>DEBUG:</strong> Total produk tintable: {{ $products->count() }} · Total warna loaded: {{ $products->sum(fn($p) => $p->warna->count()) }}
+                </div>
+            @endif
+
             <form class="color-studio" method="POST" action="{{ route('tinting.store') }}" data-tinting-studio-form>
                 @csrf
 
-                <!-- Left Panel: Workplace (Steps & Visualizer) -->
+                <!-- Left Panel: Workplace -->
                 <div class="studio-workplace">
-                    <!-- Success & Error Alerts -->
                     @if (session('success'))
                         <div class="alert success" style="margin-bottom: 0; width: 100%;">
                             <strong>Pemesanan Berhasil!</strong><br>
-                            {{ session('success') }}. Kami akan segera menghubungi nomor HP Anda untuk melakukan konfirmasi waktu pengambilan cat kustom Anda.
+                            {{ session('success') }}
                         </div>
                     @endif
 
@@ -42,7 +48,7 @@
                         <h3><span class="step-number">1</span> Pilih Tipe Cat Premium</h3>
                         <div class="studio-product-grid">
                             @forelse ($products as $product)
-                                <div class="studio-product-card @if($loop->first) active @endif" 
+                                <div class="studio-product-card @if($loop->first) active @endif"
                                      data-product-card-id="{{ $product->id_produk }}"
                                      data-product-price="{{ $product->harga }}"
                                      data-product-category="{{ $product->kategori }}"
@@ -66,13 +72,13 @@
                     <!-- Step 2: Pilih Warna Dasar -->
                     <div class="studio-step">
                         <h3><span class="step-number">2</span> Pilih Warna Dasar Cat</h3>
-                        
+
                         <!-- Search & Filter Controls -->
                         <div class="color-picker-controls" style="margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
                             <div class="field" style="margin:0">
                                 <input type="text" id="colorSearch" placeholder="Cari nama atau kode warna..." style="width:100%; min-height:42px; padding:10px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); font-size:0.9rem; background:var(--surface); color:var(--ink);">
                             </div>
-                            
+
                             <div class="color-category-filters" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none;-webkit-overflow-scrolling:touch;">
                                 <button type="button" class="filter-pill active" data-filter="all">Semua</button>
                                 <button type="button" class="filter-pill" data-filter="Putih">Putih</button>
@@ -88,12 +94,18 @@
                             </div>
                         </div>
 
-                        <!-- Compact Color Grid -->
-                        <div class="studio-color-grid" style="max-height:240px; overflow-y:auto; display:grid; grid-template-columns:repeat(8, 1fr); gap:12px; padding:12px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--surface);">
-                            @forelse ($products as $product)
+                        <!-- No product selected message -->
+                        <div id="colorSelectPrompt" style="display:none; text-align:center; color:var(--muted); padding:24px 12px; border:1px dashed var(--line); border-radius:var(--radius-md); background:var(--surface);">
+                            Pilih produk terlebih dahulu untuk melihat warna yang tersedia.
+                        </div>
+
+                        <!-- Color Grid from Database -->
+                        <div class="studio-color-grid" id="colorGridContainer" style="max-height:420px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(48px, 1fr)); gap:10px; padding:14px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--surface);">
+                            @foreach ($products as $product)
                                 @foreach ($product->warna as $color)
-                                    <div class="studio-color-chip" 
-                                         style="background-color: {{ $color->hex_color ?: '#FDB913' }}; aspect-ratio:1; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); cursor:pointer; position:relative;"
+                                    <button type="button"
+                                         class="studio-color-chip"
+                                         style="background-color: {{ $color->hex_color ?: '#FDB913' }}; aspect-ratio:1; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); cursor:pointer; position:relative; padding:0; min-width:0;"
                                          title="{{ $color->nama_warna }} ({{ $color->kode_warna }})"
                                          data-color-chip-id="{{ $color->id_warna }}"
                                          data-color-chip-product="{{ $product->id_produk }}"
@@ -101,22 +113,26 @@
                                          data-color-chip-name="{{ $color->nama_warna }}"
                                          data-color-chip-code="{{ $color->kode_warna }}"
                                          data-color-chip-category="{{ $color->kategori_warna ?? 'Netral' }}">
-                                    </div>
+                                    </button>
                                 @endforeach
-                            @empty
-                                <div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 12px; border: 1px dashed var(--line); border-radius: var(--radius-sm);">
-                                    Pilihan warna belum tersedia
-                                </div>
-                            @endforelse
+                            @endforeach
                         </div>
 
-                        <!-- Premium Selected Color Preview Card -->
+                        <!-- No results message -->
+                        <div id="colorNoResults" style="display:none; text-align:center; color:var(--muted); padding:16px; font-size:0.9rem;">
+                            Tidak ada warna yang cocok dengan filter Anda.
+                        </div>
+
+                        <!-- Color count info -->
+                        <div id="colorCountInfo" style="margin-top:8px; font-size:0.78rem; color:var(--muted); text-align:right;"></div>
+
+                        <!-- Selected Color Preview Card -->
                         <div class="selected-color-preview-card" style="margin-top:16px; padding:14px 18px; display:flex; align-items:center; gap:16px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--bg-light); transition: var(--transition);">
-                            <div id="previewColorSwatch" style="width:48px; height:48px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 3px 10px rgba(0,0,0,0.08); flex-shrink:0; background-color:#F8F5EC; transition: background-color 0.2s ease;"></div>
+                            <div id="previewColorSwatch" style="width:48px; height:48px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 3px 10px rgba(0,0,0,0.08); flex-shrink:0; background-color:#E5E7EB; transition: background-color 0.2s ease;"></div>
                             <div style="flex-grow: 1;">
-                                <span style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--jotun-yellow-hover); display:block; letter-spacing:0.05em;" id="previewColorCategory">NETRAL</span>
-                                <strong style="font-size:1.05rem; color:var(--obsidian); display:block; line-height:1.2; margin-top:2px;" id="previewColorName">Classic White</strong>
-                                <code style="font-size:0.8rem; color:var(--muted); font-family:monospace; margin-top:2px; display:inline-block;" id="previewColorCode">JTN-1624</code>
+                                <span style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--jotun-yellow-hover); display:block; letter-spacing:0.05em;" id="previewColorCategory">—</span>
+                                <strong style="font-size:1.05rem; color:var(--obsidian); display:block; line-height:1.2; margin-top:2px;" id="previewColorName">Pilih warna dari grid di atas</strong>
+                                <code style="font-size:0.8rem; color:var(--muted); font-family:monospace; margin-top:2px; display:inline-block;" id="previewColorCode">—</code>
                             </div>
                         </div>
                     </div>
@@ -124,49 +140,35 @@
                     <!-- Step 3: Visual Preview & Shade Blender -->
                     <div class="studio-step" style="flex-grow: 1; display: flex; flex-direction: column;">
                         <h3><span class="step-number">3</span> Eksperimen Shade & Visualisasi Dinding</h3>
-                        
+
                         <div class="studio-preview-box">
-                            <!-- Live Room Preview Visualizer -->
                             <div class="room-preview" id="roomPreviewCanvas">
-                                <span class="preview-status" id="activeColorBadge">Classic White (JTN-001)</span>
-                                
-                                <!-- Sleek Room Outline Overlay SVG -->
+                                <span class="preview-status" id="activeColorBadge">Belum ada warna dipilih</span>
                                 <svg class="room-overlay-svg" viewBox="0 0 800 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                                    <!-- Back Wall Layer (Transparent window to allow background color to show through) -->
                                     <path d="M 0 0 L 800 0 L 800 600 L 0 600 Z" fill="rgba(0,0,0,0.05)" />
-                                    <!-- Window Frame -->
                                     <rect x="480" y="80" width="220" height="240" rx="4" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="6" />
                                     <line x1="590" y1="80" x2="590" y2="320" stroke="#E5E7EB" stroke-width="4" />
                                     <line x1="480" y1="200" x2="700" y2="200" stroke="#E5E7EB" stroke-width="4" />
-                                    <!-- Window glass sheen -->
                                     <rect x="486" y="86" width="98" height="108" fill="rgba(255,255,255,0.25)" />
-                                    <!-- Floor Shadow & Perspective Wall lines -->
                                     <polygon points="0,480 800,480 800,600 0,600" fill="#EAEAEF" />
                                     <line x1="0" y1="480" x2="800" y2="480" stroke="#D1D5DB" stroke-width="3" />
-                                    <!-- Baseboard outline -->
                                     <rect x="0" y="468" width="800" height="12" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1" />
-                                    <!-- Plant pot outline / Minimal interior -->
                                     <path d="M 120 480 L 150 480 L 142 420 L 128 420 Z" fill="#D1D5DB" />
                                     <path d="M 115 420 C 100 380 70 390 90 350 C 110 310 135 340 135 340 C 135 340 160 310 180 350 C 200 390 170 380 155 420 Z" fill="#7D8C82" opacity="0.9" />
-                                    <!-- Modern Minimalist Chair -->
                                     <rect x="250" y="380" width="100" height="16" rx="4" fill="#1E2229" />
                                     <rect x="270" y="396" width="60" height="84" fill="#334155" />
                                     <line x1="260" y1="396" x2="260" y2="480" stroke="#1E2229" stroke-width="6" stroke-linecap="round" />
                                     <line x1="340" y1="396" x2="340" y2="480" stroke="#1E2229" stroke-width="6" stroke-linecap="round" />
                                     <line x1="280" y1="396" x2="280" y2="480" stroke="#1E2229" stroke-width="4" />
                                     <line x1="320" y1="396" x2="320" y2="480" stroke="#1E2229" stroke-width="4" />
-                                    <!-- Sleek Shadow under chair -->
                                     <ellipse cx="300" cy="480" rx="55" ry="8" fill="rgba(0,0,0,0.08)" />
                                 </svg>
                             </div>
 
-                            <!-- Custom Pigment Mixer Shade Blender -->
                             <div class="shade-blender">
                                 <div>
                                     <h4>Campur & Blender Shade</h4>
-                                    
                                     <div class="slider-group">
-                                        <!-- Lightness Slider -->
                                         <div class="slider-field">
                                             <div class="slider-header">
                                                 <span>Keterangan Warna (Lightness)</span>
@@ -174,8 +176,6 @@
                                             </div>
                                             <input type="range" class="studio-slider" id="sliderLightness" min="40" max="160" value="100" aria-label="Keterangan Warna">
                                         </div>
-
-                                        <!-- Warmth Slider -->
                                         <div class="slider-field">
                                             <div class="slider-header">
                                                 <span>Kehangatan Warna (Warmth)</span>
@@ -186,32 +186,22 @@
                                     </div>
                                 </div>
 
-                                <!-- Formula Display Output -->
                                 <div class="formula-display">
                                     <h5>Komposisi Racikan Pigmen Cat</h5>
                                     <div class="formula-bars">
-                                        <!-- Base Paint -->
                                         <div class="formula-bar-item">
                                             <span class="formula-label">Base Cat</span>
-                                            <div class="formula-track">
-                                                <div class="formula-fill base" id="formulaBase" style="width: 90%;"></div>
-                                            </div>
+                                            <div class="formula-track"><div class="formula-fill base" id="formulaBase" style="width: 90%;"></div></div>
                                             <span class="formula-value" id="formulaBaseText">90%</span>
                                         </div>
-                                        <!-- Pigment Ochre -->
                                         <div class="formula-bar-item">
                                             <span class="formula-label">Pigmen Kuning</span>
-                                            <div class="formula-track">
-                                                <div class="formula-fill tint-a" id="formulaTintA" style="width: 7%;"></div>
-                                            </div>
+                                            <div class="formula-track"><div class="formula-fill tint-a" id="formulaTintA" style="width: 7%;"></div></div>
                                             <span class="formula-value" id="formulaTintAText">7%</span>
                                         </div>
-                                        <!-- Pigment Red Oxide -->
                                         <div class="formula-bar-item">
                                             <span class="formula-label">Pigmen Merah</span>
-                                            <div class="formula-track">
-                                                <div class="formula-fill tint-b" id="formulaTintB" style="width: 3%;"></div>
-                                            </div>
+                                            <div class="formula-track"><div class="formula-fill tint-b" id="formulaTintB" style="width: 3%;"></div></div>
                                             <span class="formula-value" id="formulaTintBText">3%</span>
                                         </div>
                                     </div>
@@ -225,7 +215,7 @@
                 <div class="studio-control-panel">
                     <div class="studio-step">
                         <h3><span class="step-number">4</span> Detail Pemesanan Cat</h3>
-                        
+
                         <div class="field full-field" style="margin-top: 16px;">
                             <label for="jumlah_kaleng">Jumlah Kaleng Cat</label>
                             <input id="jumlah_kaleng" name="jumlah_kaleng" type="number" min="1" max="100" value="{{ old('jumlah_kaleng', 1) }}" required style="width: 100%;">
@@ -242,53 +232,39 @@
 
                     <div class="studio-step" style="margin-top: 36px; flex-grow: 1;">
                         <h3><span class="step-number">5</span> Informasi Kontak Pelanggan</h3>
-                        
-                        <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
-                            <div class="field">
-                                <label for="nama_pelanggan">Nama Lengkap</label>
-                                <input id="nama_pelanggan" name="nama_pelanggan" type="text" value="{{ old('nama_pelanggan') }}" placeholder="Contoh: Budi Santoso" required style="width: 100%;">
-                            </div>
 
-                            <div class="field">
-                                <label for="no_hp">Nomor HP / WhatsApp</label>
-                                <input id="no_hp" name="no_hp" type="text" value="{{ old('no_hp') }}" placeholder="Contoh: 0812xxxxxxxx" required style="width: 100%;">
+                        @auth
+                            <div style="padding:12px 0; font-size:0.9rem; color:var(--muted);">
+                                Anda login sebagai <strong>{{ Auth::user()->name }}</strong>. Data pelanggan akan otomatis terhubung ke akun Anda.
                             </div>
-
-                            <div class="field">
-                                <label for="email">Alamat Email (Opsional)</label>
-                                <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="budi@example.com" style="width: 100%;">
+                        @else
+                            <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
+                                <div class="field">
+                                    <label for="nama_pelanggan">Nama Lengkap</label>
+                                    <input id="nama_pelanggan" name="nama_pelanggan" type="text" value="{{ old('nama_pelanggan') }}" placeholder="Contoh: Budi Santoso" required style="width: 100%;">
+                                </div>
+                                <div class="field">
+                                    <label for="no_hp">Nomor HP / WhatsApp</label>
+                                    <input id="no_hp" name="no_hp" type="text" value="{{ old('no_hp') }}" placeholder="Contoh: 0812xxxxxxxx" required style="width: 100%;">
+                                </div>
+                                <div class="field">
+                                    <label for="email">Alamat Email (Opsional)</label>
+                                    <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="budi@example.com" style="width: 100%;">
+                                </div>
                             </div>
-                        </div>
+                        @endauth
                     </div>
 
-                    <!-- Hidden Inputs Synced via Client JS for DB submission -->
-                    <div style="display: none;">
-                        <select id="id_produk" name="id_produk" required>
-                            @foreach ($products as $product)
-                                <option value="{{ $product->id_produk }}" @selected(old('id_produk') === $product->id_produk)>
-                                    {{ $product->nama_produk }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <!-- Hidden Inputs -->
+                    <input type="hidden" name="id_produk" id="selectedProductInput" value="{{ old('id_produk', $products->first()?->id_produk) }}">
+                    <input type="hidden" name="id_warna" id="selectedColorInput" value="{{ old('id_warna') }}">
 
-                        <select id="id_warna" name="id_warna" required>
-                            @foreach ($products as $product)
-                                @foreach ($product->warna as $color)
-                                    <option value="{{ $color->id_warna }}" data-product="{{ $product->id_produk }}" @selected(old('id_warna') === $color->id_warna)>
-                                        {{ $color->nama_warna }}
-                                    </option>
-                                @endforeach
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Checkout & Live Price Estimate -->
+                    <!-- Checkout -->
                     <div class="studio-checkout">
                         <div class="studio-price-box">
                             <span>Estimasi Total Pembayaran</span>
                             <strong id="studioPriceEstimate">Rp0</strong>
                         </div>
-
                         <button class="btn btn-primary" type="submit" style="width: 100%; height: 50px; font-size: 1rem; font-weight: 700;">
                             Kirim Request Tinting Kustom
                         </button>
