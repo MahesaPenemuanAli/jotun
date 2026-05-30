@@ -176,6 +176,28 @@ if (studioForm) {
         warmth: 0
     };
 
+    const resetSelectedColorPreview = (message = "Pilih warna dari grid di atas") => {
+        state.selectedColorId = "";
+        state.selectedColorHex = "#E5E7EB";
+        state.selectedColorName = "";
+        state.selectedColorCode = "";
+
+        if (hiddenColorInput) hiddenColorInput.value = "";
+
+        colorChips.forEach((chip) => chip.classList.remove("active"));
+
+        const previewSwatch = studioForm.querySelector("#previewColorSwatch");
+        const previewCategory = studioForm.querySelector("#previewColorCategory");
+        const previewName = studioForm.querySelector("#previewColorName");
+        const previewCode = studioForm.querySelector("#previewColorCode");
+
+        if (previewSwatch) previewSwatch.style.backgroundColor = "#E5E7EB";
+        if (previewCategory) previewCategory.textContent = "—";
+        if (previewName) previewName.textContent = message;
+        if (previewCode) previewCode.textContent = "—";
+        if (activeColorBadge) activeColorBadge.textContent = "Belum ada warna dipilih";
+    };
+
     const hexToHsl = (hex) => {
         let r = parseInt(hex.slice(1, 3), 16) / 255;
         let g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -270,9 +292,16 @@ if (studioForm) {
         if (colorCountInfo) colorCountInfo.textContent = state.selectedProductId ? `${visibleCount} warna tersedia` : "";
 
         // Auto-select first visible if current is not visible
-        if (firstVisibleChip) {
-            const currentStillVisible = Array.from(colorChips).find(c => c.dataset.colorChipId === state.selectedColorId && !c.classList.contains("hidden"));
-            if (!currentStillVisible) firstVisibleChip.click();
+        const currentStillVisible = Array.from(colorChips).find(
+            (c) => c.dataset.colorChipId === state.selectedColorId && !c.classList.contains("hidden")
+        );
+
+        if (firstVisibleChip && !currentStillVisible) {
+            firstVisibleChip.click();
+        }
+
+        if (!firstVisibleChip) {
+            resetSelectedColorPreview("Tidak ada warna yang cocok dengan filter Anda");
         }
     };
 
@@ -284,6 +313,7 @@ if (studioForm) {
         // Reset color selection
         state.selectedColorId = "";
         if (hiddenColorInput) hiddenColorInput.value = "";
+        resetSelectedColorPreview();
 
         productCards.forEach((card) => {
             card.classList.toggle("active", card.dataset.productCardId === productId);

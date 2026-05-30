@@ -13,13 +13,6 @@
     <!-- Interactive Workspace Section -->
     <section class="section alt-bg" style="padding: 56px 0;">
         <div class="container">
-            {{-- Debug info --}}
-            @if(config('app.debug'))
-                <div style="background:#fef3c7;border:1px solid #f59e0b;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:0.8rem;color:#92400e;">
-                    <strong>DEBUG:</strong> Total produk tintable: {{ $products->count() }} · Total warna loaded: {{ $products->sum(fn($p) => $p->warna->count()) }}
-                </div>
-            @endif
-
             <form class="color-studio" method="POST" action="{{ route('tinting.store') }}" data-tinting-studio-form>
                 @csrf
 

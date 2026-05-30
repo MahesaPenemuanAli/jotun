@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\KatalogProduk;
 use App\Models\Warna;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class JotunColorSeeder extends Seeder
 {
@@ -149,42 +151,67 @@ class JotunColorSeeder extends Seeder
         ];
 
         // ── Map colors to products ──
-        $interiorProducts = [
-            'Majestic Sense', 'Majestic True Beauty Matt', 'Majestic True Beauty Sheen',
-            'Majestic Pure Color', 'Essence Easy Wipe', 'Essence Cover Plus Sheen',
-        ];
+        DB::transaction(function () use ($interiorColors, $eksteriorColors, $gardexColors) {
+            $interiorProducts = [
+                'Majestic Sense',
+                'Majestic True Beauty Matt',
+                'Majestic True Beauty Sheen',
+                'Majestic Pure Color',
+                'Essence Easy Wipe',
+                'Essence Cover Plus Sheen',
+            ];
 
-        $eksteriorProducts = [
-            'Jotashield Infinity', 'Jotashield Ultra Clean', 'Jotashield Flex',
-            'Jotashield Antifade Colours', 'Jotun Tough Shield Max', 'Jotun Tough Shield',
-        ];
+            $eksteriorProducts = [
+                'Jotashield Infinity',
+                'Jotashield Ultra Clean',
+                'Jotashield Flex',
+                'Jotashield Antifade Colours',
+                'Jotun Tough Shield Max',
+                'Jotun Tough Shield',
+            ];
 
-        $this->seedColorsForProducts($interiorColors, $interiorProducts);
-        $this->seedColorsForProducts($eksteriorColors, $eksteriorProducts);
-        $this->seedColorsForProducts($gardexColors, ['Gardex Premium Gloss']);
+            $gardexProducts = [
+                'Gardex Premium Gloss',
+            ];
+
+            $this->seedColorsForProducts($interiorColors, $interiorProducts);
+            $this->seedColorsForProducts($eksteriorColors, $eksteriorProducts);
+            $this->seedColorsForProducts($gardexColors, $gardexProducts);
+        });
     }
 
     private function seedColorsForProducts(array $colors, array $productNames): void
     {
+        $products = KatalogProduk::query()
+            ->aktif()
+            ->tintable()
+            ->whereIn('nama_produk', $productNames)
+            ->get()
+            ->keyBy('nama_produk');
+
         foreach ($productNames as $name) {
-            $product = KatalogProduk::query()->where('nama_produk', $name)->first();
+            $product = $products->get($name);
+
             if (! $product) {
+                $this->command?->warn("Produk aktif/tintable tidak ditemukan: {$name}");
                 continue;
             }
 
             foreach ($colors as $c) {
                 Warna::query()->updateOrCreate(
                     [
-                        'id_produk'  => $product->id_produk,
+                        'id_produk' => $product->id_produk,
                         'kode_warna' => $c['kode'],
                     ],
                     [
-                        'nama_warna'     => $c['nama'],
-                        'hex_color'      => $c['hex'],
+                        'nama_warna' => $c['nama'],
+                        'hex_color' => $c['hex'],
                         'kategori_warna' => $c['kat'],
                     ]
                 );
             }
+
+            $this->command?->info("{$name}: " . count($colors) . " warna berhasil disinkronkan.");
         }
     }
 }
