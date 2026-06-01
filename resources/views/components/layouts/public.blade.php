@@ -19,6 +19,7 @@
 </head>
 <body>
     <div class="page-shell">
+        @if (!request()->routeIs('pelanggan.login', 'pelanggan.register'))
         <header class="site-header">
             <div class="container header-inner">
                 <a class="brand" href="{{ route('home') }}" aria-label="Jotun Paint Center">
@@ -29,10 +30,10 @@
                 </a>
 
                 <nav class="nav-links" aria-label="Navigasi utama">
-                    <a href="{{ route('home') }}">Beranda</a>
-                    <a href="{{ route('catalog.index') }}">Katalog</a>
-                    <a href="{{ route('calculator.create') }}">Kalkulator</a>
-                    <a href="{{ route('tinting.create') }}" class="nav-accent">Color Studio</a>
+                    <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
+                    <a href="{{ route('catalog.index') }}" class="{{ request()->routeIs('catalog.*') ? 'active' : '' }}">Katalog</a>
+                    <a href="{{ route('calculator.create') }}" class="{{ request()->routeIs('calculator.*') ? 'active' : '' }}">Kalkulator</a>
+                    <a href="{{ route('tinting.create') }}" class="nav-accent {{ request()->routeIs('tinting.*') ? 'active' : '' }}">Color Studio</a>
                     <a href="{{ route('home') }}#lokasi">Lokasi</a>
 
                     @auth
@@ -60,11 +61,20 @@
                 </nav>
             </div>
         </header>
+        @else
+        <div style="position: absolute; top: 24px; left: 24px; z-index: 100;">
+            <a href="{{ route('home') }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Kembali ke Beranda
+            </a>
+        </div>
+        @endif
 
         <main>
             {{ $slot }}
         </main>
 
+        @if (!request()->routeIs('pelanggan.login', 'pelanggan.register'))
         <footer class="site-footer">
             <div class="container footer-inner">
                 <div class="footer-info">
@@ -77,6 +87,7 @@
                 </div>
             </div>
         </footer>
+        @endif
     </div>
 
     <script>

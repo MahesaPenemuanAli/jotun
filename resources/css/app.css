@@ -115,12 +115,19 @@ a {
     background-color: var(--line-light);
 }
 
+.nav-links a.active {
+    color: var(--obsidian);
+    background-color: var(--jotun-yellow-soft);
+    font-weight: 800;
+    border-bottom: 2px solid var(--jotun-yellow);
+}
+
 .nav-links a.nav-accent {
     color: var(--obsidian);
     background-color: var(--jotun-yellow);
 }
 
-.nav-links a.nav-accent:hover {
+.nav-links a.nav-accent:hover, .nav-links a.nav-accent.active {
     background-color: var(--jotun-yellow-hover);
 }
 
